@@ -6,6 +6,14 @@
   <title>Кнопка</title>
 
   <style>
+* {
+  -webkit-user-select: none; /* Safari, мобильные браузеры */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE/Edge */
+  user-select: none;         /* стандарт */
+  -webkit-tap-highlight-color: transparent; /* убирает синее выделение на мобильных */
+}
+
     * {
       box-sizing: border-box;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -68,6 +76,9 @@ button {
         0 0 30px rgba(255, 120, 150, 0.4);
     }
   </style>
+
+
+
 </head>
 <body>
 
