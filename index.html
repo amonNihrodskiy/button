@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Кнопка</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: radial-gradient(circle at top, #1b1b1b, #000);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      overflow: hidden;
+    }
+
+    .container {
+      text-align: center;
+      padding: 20px;
+    }
+
+    button {
+      padding: 18px 40px;
+      font-size: 18px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff4d6d, #ff758f);
+      color: white;
+      box-shadow: 0 10px 30px rgba(255, 77, 109, 0.4);
+    }
+
+    button:active {
+      transform: none;
+    }
+
+    .text {
+      margin-bottom: 40px;
+      font-size: 28px;
+      min-height: 1.5em;
+      opacity: 0;
+      filter: blur(12px);
+      transform: scale(0.7);
+      transition: opacity 0.25s ease, transform 0.25s ease, filter 0.25s ease;
+    }
+
+    .text.show {
+      opacity: 1;
+      filter: blur(0);
+      transform: scale(1);
+    }
+
+    .glow {
+      text-shadow:
+        0 0 10px rgba(255, 120, 150, 0.6),
+        0 0 30px rgba(255, 120, 150, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div id="text" class="text"></div>
+    <button id="btn">Нажми меня</button>
+  </div>
+
+  <script>
+    const phrases = [
+"Mən səni sevirəm",
+"Të dua",
+"እወድሃለሁ",
+"I love you",
+"انا احبك",
+"Ես սիրում եմ քեզ",
+"Ek is lief vir jou",
+"Maite zaitut",
+"Мин сине яратам",
+"Я цябе кохаю",
+"আমি তোমাকে ভালবাসি",
+"ငါမင်းကိုချစ်တယ်",
+"Обичам те",
+"Volim te",
+"Rwyf wrth fy modd i chi",
+"Szeretlek",
+"Anh yêu em",
+"Mwen renmen ou",
+"Quérote",
+"Мӹнь тӹньӹм яратем",
+"Σ ' αγαπώ",
+"მე შენ მიყვარხარ",
+"હું તમને પ્રેમ",
+"Jeg elsker dig",
+"Ngiyakuthanda",
+"אני אוהב אותך",
+"איך ליבע איר",
+"Aku mencintaimu",
+"Is breá liom tú",
+"Ég elska þig",
+"Te quiero",
+"Ti amo",
+"Мен сені сүйемін",
+"Men seni súıemin",
+"ಐ ಲವ್ ಯೂ",
+"T'estimo",
+"мен сени сүйөм",
+"我爱您",
+"사랑해요",
+"Ndiyakuthanda",
+"ខ្ញុំស្រឡាញ់អ្នក",
+"ຂ້ອຍຮັກເຈົ້າ",
+"Amo te",
+"es tevi mīlu",
+"aš tave myliu",
+"Ech léift dech",
+"Те сакам",
+"Tiako ianao",
+"I love you",
+"ഞാന് നിന്നെ സ്നേഹിക്കുന്നു",
+"I love inti",
+"Aroha ahau ki a koe",
+"माझं तुझ्यावर प्रेम आहे",
+"Мый тыйым йӧратем",
+"Би чамд хайртай",
+"Ich liebe dich",
+"म तिमीलाई माया गर्छु",
+"Ik hou van je",
+"Jeg elsker deg",
+"ਮੈਨੂੰ ਤੁਹਾਡੇ ਨਾਲ ਪਿਆਰ",
+"Bo ta deseá",
+"دوستت دارم",
+"Kocham Cię",
+"eu amo-te",
+"Te iubesc",
+"Я тебя люблю",
+"Gihigugma ko ikaw",
+"volim te",
+"මම ඔයාට ආදරෙයි",
+"Milujem ťa",
+"Ljubim te",
+"I love you",
+"Abdi bogoh ka anjeun",
+"Mahal kita",
+"Ман туро дӯст медорам",
+"ฉันรักคุณ",
+"ஐ லவ் யூ",
+"Мин сине яратам",
+"నేను నిన్ను ప్రేమిస్తున్నాను",
+"Seni seviyorum",
+"Яратӥ мон тонэ",
+"men sizni yaxshi ko'raman",
+"Мен сени севаман",
+"Я тебе кохаю",
+"مجھے تم سے محبت ہے",
+"Minä rakastan teitä",
+"Je t'aime",
+"मैं आपसे प्यार करती हूँ।",
+"Volim te",
+"Já tě miluji",
+"эпӗ сана юратӑм",
+"Jag älskar dej",
+"Tha gaol agam ort",
+"Mi amas vin",
+"ma armastan sind",
+"Saya sayang awak",
+"мин эйигин таптыыбын",
+"だって好きなんだもの",
+"Ol rie migimu"
+    ];
+
+    const btn = document.getElementById('btn');
+    const text = document.getElementById('text');
+
+    btn.addEventListener('click', () => {
+      const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+
+      // 1. быстро скрываем текущий текст
+      text.classList.remove('show', 'glow');
+
+      // 2. после короткой паузы показываем новый
+      setTimeout(() => {
+        text.textContent = phrase;
+        text.classList.add('show', 'glow');
+      }, 150);
+    });
+  </script>
+
+</body>
+</html>
