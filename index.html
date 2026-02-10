@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>С Новым годом</title>
+  <title>С Днём Святого Валентина</title>
 
   <style>
 * {
@@ -17,7 +17,7 @@ body {
   margin: 0;
   height: 100vh;
   background:
-    radial-gradient(circle at top, #2a3a5e, #0b1020);
+    radial-gradient(circle at top, #3b0a2a, #120015);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -25,20 +25,33 @@ body {
   overflow: hidden;
 }
 
-/* ❄️ СНЕГ */
-.snowflake {
+/* 💖 ПАДАЮЩИЕ СЕРДЦА */
+.heart {
   position: fixed;
-  top: -10px;
-  color: white;
-  font-size: 14px;
-  opacity: 0.8;
+  top: -50px;
+  font-size: 42px;
   animation: fall linear infinite;
-  pointer-events: none;
+  cursor: pointer;
 }
 
 @keyframes fall {
   to {
-    transform: translateY(110vh);
+    transform: translateY(110vh) rotate(360deg);
+  }
+}
+
+/* 💥 ВЗРЫВ */
+.particle {
+  position: fixed;
+  font-size: 14px;
+  pointer-events: none;
+  animation: explode 0.9s ease-out forwards;
+}
+
+@keyframes explode {
+  to {
+    transform: translate(var(--x), var(--y)) scale(0);
+    opacity: 0;
   }
 }
 
@@ -50,8 +63,7 @@ body {
 
 .static-text {
   margin-bottom: 25px;
-  font-size: 30px;
-  opacity: 0.95;
+  font-size: 32px;
 }
 
 .text {
@@ -72,8 +84,8 @@ body {
 
 .glow {
   text-shadow:
-    0 0 12px rgba(255, 180, 200, 0.9),
-    0 0 30px rgba(255, 120, 150, 0.6);
+    0 0 15px rgba(255, 80, 120, 0.9),
+    0 0 40px rgba(255, 50, 100, 0.7);
 }
 
 button {
@@ -82,11 +94,11 @@ button {
   border-radius: 999px;
   border: none;
   cursor: pointer;
-  background: linear-gradient(135deg, #ff5f8f, #ff8fb1);
+  background: linear-gradient(135deg, #ff2f6f, #ff6fa5);
   color: white;
   box-shadow:
-    0 0 20px rgba(255, 120, 150, 0.6),
-    0 10px 40px rgba(255, 120, 150, 0.4);
+    0 0 25px rgba(255, 80, 120, 0.7),
+    0 10px 40px rgba(255, 80, 120, 0.5);
 }
 
 button:hover {
@@ -98,124 +110,83 @@ button:hover {
 <body>
 
   <div class="container">
-    <div class="static-text glow">🎄 С новым годом, солнышко ♥</div>
+    <div class="static-text glow">💘 С 14 февраля, моё счастье 💘</div>
     <div id="text" class="text"></div>
-    <button id="btn">Нажми меня</button>
+    <button id="btn">Сказать ещё раз</button>
   </div>
 
   <script>
-    // ❄️ генерация снега
-    for (let i = 0; i < 50; i++) {
-      const snow = document.createElement('div');
-      snow.className = 'snowflake';
-      snow.textContent = '❄';
-      snow.style.left = Math.random() * 100 + 'vw';
-      snow.style.animationDuration = 5 + Math.random() * 10 + 's';
-      snow.style.fontSize = 10 + Math.random() * 20 + 'px';
-      document.body.appendChild(snow);
+    // 💖 падающие сердечки
+    function createHeart() {
+      const heart = document.createElement('div');
+      heart.className = 'heart';
+      heart.textContent = '💖';
+      heart.style.left = Math.random() * 100 + 'vw';
+      heart.style.animationDuration = 6 + Math.random() * 8 + 's';
+
+      heart.addEventListener('click', (e) => {
+        explode(e.clientX, e.clientY);
+        heart.remove();
+      });
+
+      document.body.appendChild(heart);
+
+      setTimeout(() => heart.remove(), 15000);
     }
 
-    const phrases = [
-"Mən səni sevirəm",
-"Të dua",
-"እወድሃለሁ",
-"I love you",
-"انا احبك",
-"Ես սիրում եմ քեզ",
-"Ek is lief vir jou",
-"Maite zaitut",
-"Мин сине яратам",
-"Я цябе кохаю",
-"আমি তোমাকে ভালবাসি",
-"ငါမင်းကိုချစ်တယ်",
-"Обичам те",
-"Volim te",
-"Rwyf wrth fy modd i chi",
-"Szeretlek",
-"Anh yêu em",
-"Mwen renmen ou",
-"Quérote",
-"Мӹнь тӹньӹм яратем",
-"Σ ' αγαπώ",
-"მე შენ მიყვარხარ",
-"હું તમને પ્રેમ",
-"Jeg elsker dig",
-"Ngiyakuthanda",
-"אני אוהב אותך",
-"איך ליבע איר",
-"Aku mencintaimu",
-"Is breá liom tú",
-"Ég elska þig",
-"Te quiero",
-"Ti amo",
-"Мен сені сүйемін",
-"Men seni súıemin",
-"ಐ ಲವ್ ಯೂ",
-"T'estimo",
-"мен сени сүйөм",
-"我爱您",
-"사랑해요",
-"Ndiyakuthanda",
-"ខ្ញុំស្រឡាញ់អ្នក",
-"ຂ້ອຍຮັກເຈົ້າ",
-"Amo te",
-"es tevi mīlu",
-"aš tave myliu",
-"Ech léift dech",
-"Те сакам",
-"Tiako ianao",
-"I love you",
-"ഞാന് നിന്നെ സ്നേഹിക്കുന്നു",
-"I love inti",
-"Aroha ahau ki a koe",
-"माझं तुझ्यावर प्रेम आहे",
-"Мый тыйым йӧратем",
-"Би чамд хайртай",
-"Ich liebe dich",
-"म तिमीलाई माया गर्छु",
-"Ik hou van je",
-"Jeg elsker deg",
-"ਮੈਨੂੰ ਤੁਹਾਡੇ ਨਾਲ ਪਿਆਰ",
-"Bo ta deseá",
-"دوستت دارم",
-"Kocham Cię",
-"eu amo-te",
-"Te iubesc",
-"Я тебя люблю",
-"Gihigugma ko ikaw",
-"volim te",
-"මම ඔයාට ආදරෙයි",
-"Milujem ťa",
-"Ljubim te",
-"I love you",
-"Abdi bogoh ka anjeun",
-"Mahal kita",
-"Ман туро дӯст медорам",
-"ฉันรักคุณ",
-"ஐ லவ் யூ",
-"Мин сине яратам",
-"నేను నిన్ను ప్రేమిస్తున్నాను",
-"Seni seviyorum",
-"Яратӥ мон тонэ",
-"men sizni yaxshi ko'raman",
-"Мен сени севаман",
-"Я тебе кохаю",
-"مجھے تم سے محبت ہے",
-"Minä rakastan teitä",
-"Je t'aime",
-"मैं आपसे प्यार करती हूँ।",
-"Volim te",
-"Já tě miluji",
-"эпӗ сана юратӑм",
-"Jag älskar dej",
-"Tha gaol agam ort",
-"Mi amas vin",
-"ma armastan sind",
-"Saya sayang awak",
-"мин эйигин таптыыбын",
-"だって好きなんだもの",
-"Ol rie migimu"
-    ];
+    setInterval(createHeart, 600);
+
+    // 💥 взрыв сердечек
+    function explode(x, y) {
+      for (let i = 0; i < 14; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.textContent = '💗';
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+
+        const angle = Math.random() * 2 * Math.PI;
+        const distance = 80 + Math.random() * 60;
+
+        p.style.setProperty('--x', Math.cos(angle) * distance + 'px');
+        p.style.setProperty('--y', Math.sin(angle) * distance + 'px');
+
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 900);
+      }
+    }
+
+const phrases = [
+  "Я люблю тебя всем сердцем ❤️",
+  "С тобой весь мир становится теплее 💘",
+  "Ты мой самый любимый человек на свете 💗",
+  "Каждый день рядом с тобой праздник 💝",
+  "Я счастлив, что ты есть в моей жизни ❤️",
+  "Люблю тебя сильнее с каждым днём 💖",
+  "Ты моё счастье 💕",
+  "Ты делаешь меня лучше каждый день 💘",
+  "Моё сердце всегда выбирает тебя ❤️",
+  "Ты мой дом, где бы я ни был 💖",
+  "С тобой даже тишина уютная 💗",
+  "Ты самое прекрасное, что со мной случалось 💝",
+  "Я влюбляюсь в тебя снова и снова 💘",
+  "Ты моя радость, моя любовь, моя вселенная ❤️",
+  "Без тебя мир был бы совсем другим 💕",
+  "Ты моё сегодня, завтра и всегда 💖",
+  "Я улыбаюсь каждый раз, когда думаю о тебе 💗",
+  "Ты причина моего счастья 💝",
+  "Любовь — это ты ❤️",
+  "Ты мой самый тёплый февраль 💘",
+  "С тобой любое время года — весна 💕",
+  "Ты моё чудо 💖",
+  "Я люблю тебя больше, чем могу сказать ❤️",
+  "Ты моё самое нежное чувство 💗",
+  "Моё сердце бьётся для тебя 💘",
+  "Ты моя самая красивая история 💝",
+  "Я всегда на твоей стороне ❤️",
+  "Ты любовь всей моей жизни 💖",
+  "С тобой я по-настоящему счастлив 💕"
+];
 
     const btn = document.getElementById('btn');
     const text = document.getElementById('text');
