@@ -16,7 +16,8 @@
 body {
   margin: 0;
   height: 100vh;
-  background: radial-gradient(circle at top, #3b0a2a, #120015);
+  background:
+    radial-gradient(circle at top, #3b0a2a, #120015);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -27,7 +28,7 @@ body {
 /* 💖 ПАДАЮЩИЕ СЕРДЦА */
 .heart {
   position: fixed;
-  top: -60px;
+  top: -50px;
   font-size: 42px;
   animation: fall linear infinite;
   cursor: pointer;
@@ -61,8 +62,24 @@ body {
 }
 
 .static-text {
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   font-size: 32px;
+}
+
+.text {
+  margin-bottom: 40px;
+  font-size: 28px;
+  min-height: 1.5em;
+  opacity: 0;
+  filter: blur(12px);
+  transform: scale(0.7);
+  transition: 0.25s ease;
+}
+
+.text.show {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
 }
 
 .glow {
@@ -71,24 +88,6 @@ body {
     0 0 40px rgba(255, 50, 100, 0.7);
 }
 
-/* 💌 ТЕКСТ ПОД КНОПКОЙ */
-.text {
-  margin-top: 35px;
-  font-size: 28px;
-  min-height: 1.6em;
-  opacity: 0;
-  filter: blur(12px);
-  transform: translateY(-20px) scale(0.8);
-  transition: all 0.45s ease;
-}
-
-.text.show {
-  opacity: 1;
-  filter: blur(0);
-  transform: translateY(0) scale(1);
-}
-
-/* 💘 КНОПКА */
 button {
   padding: 18px 44px;
   font-size: 18px;
@@ -100,17 +99,10 @@ button {
   box-shadow:
     0 0 25px rgba(255, 80, 120, 0.7),
     0 10px 40px rgba(255, 80, 120, 0.5);
-  transition: all 0.4s ease;
 }
 
 button:hover {
   transform: scale(1.05);
-}
-
-button.hide {
-  opacity: 0;
-  transform: scale(0.7);
-  pointer-events: none;
 }
   </style>
 </head>
@@ -119,14 +111,12 @@ button.hide {
 
   <div class="container">
     <div class="static-text glow">💘 С 14 февраля, моё счастье 💘</div>
-
-    <button id="btn">Сказать ещё раз</button>
-
-    <div id="text" class="text glow"></div>
+<button id="btn">Сказать ещё раз</button>
+<div id="text" class="text"></div>
   </div>
 
   <script>
-    /* 💖 ПАДАЮЩИЕ СЕРДЦА */
+    // 💖 падающие сердечки
     function createHeart() {
       const heart = document.createElement('div');
       heart.className = 'heart';
@@ -140,12 +130,13 @@ button.hide {
       });
 
       document.body.appendChild(heart);
+
       setTimeout(() => heart.remove(), 15000);
     }
 
     setInterval(createHeart, 600);
 
-    /* 💥 ВЗРЫВ СЕРДЕЧЕК */
+    // 💥 взрыв сердечек
     function explode(x, y) {
       for (let i = 0; i < 14; i++) {
         const p = document.createElement('div');
@@ -154,7 +145,7 @@ button.hide {
         p.style.left = x + 'px';
         p.style.top = y + 'px';
 
-        const angle = Math.random() * Math.PI * 2;
+        const angle = Math.random() * 2 * Math.PI;
         const distance = 80 + Math.random() * 60;
 
         p.style.setProperty('--x', Math.cos(angle) * distance + 'px');
@@ -199,22 +190,15 @@ const phrases = [
 
     const btn = document.getElementById('btn');
     const text = document.getElementById('text');
-    let firstClick = true;
 
     btn.addEventListener('click', () => {
       const phrase = phrases[Math.floor(Math.random() * phrases.length)];
-
-      text.classList.remove('show');
+      text.classList.remove('show', 'glow');
 
       setTimeout(() => {
         text.textContent = phrase;
-        text.classList.add('show');
+        text.classList.add('show', 'glow');
       }, 150);
-
-      if (firstClick) {
-        btn.classList.add('hide');
-        firstClick = false;
-      }
     });
   </script>
 
