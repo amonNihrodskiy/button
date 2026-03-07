@@ -1,349 +1,912 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Весна</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>С 8 Марта! 🌸</title>
+<style>
+  /* === БАЗОВЫЕ НАСТРОЙКИ === */
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; font-family: system-ui, -apple-system, sans-serif; }
+  body { height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #bfe9ff 0%, #ffe6f3 50%, #fff7d6 100%); }
+  
+  /* === СТАРТОВЫЙ ЭКРАН === */
+  .start-screen {
+    position: fixed; inset: 0; z-index: 5000;
+    /* По умолчанию скрыт, JS решит показывать ли его */
+    display: none; 
+    flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, #bfe9ff 0%, #ffe6f3 50%, #fff7d6 100%);
+    text-align: center; padding: 20px;
+    opacity: 0; 
+    transition: opacity 0.8s ease, transform 0.8s ease; 
+  }
+  
+  /* Класс для показа стартового экрана */
+  .start-screen.active { display: flex; opacity: 1; }
+  /* Класс для красивого скрытия (растворение + зум) */
+  .start-screen.fade-out { opacity: 0; transform: scale(1.1); pointer-events: none; }
+  
+  .start-content { animation: float 3s ease-in-out infinite; }
+  .start-emoji { font-size: 80px; margin-bottom: 20px; display: block; }
+  .start-title { font-size: 28px; font-weight: 900; color: #2b1b2a; margin-bottom: 10px; line-height: 1.2; }
+  .start-subtitle { font-size: 16px; font-weight: 600; color: #5a4b59; margin-bottom: 40px; max-width: 300px; margin-left: auto; margin-right: auto; }
+  
+  .start-btn {
+    font-size: 20px; padding: 18px 45px; border-radius: 50px;
+    background: linear-gradient(135deg, #ff8da1, #ff3385);
+    color: white; border: none; font-weight: 800;
+    box-shadow: 0 10px 30px rgba(255, 51, 133, 0.4);
+    cursor: pointer; transition: transform 0.2s;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .start-btn:active { transform: scale(0.95); }
 
-  <style>
-* {
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* === ИГРОВОЙ КОНТЕЙНЕР === */
+  .game-ui-container { 
+    display: none; /* Скрыто до старта */
+    width: 100%; height: 100%; 
+  }
+  .game-ui-container.visible { display: block; }
+
+  /* === АНИМАЦИИ ПОЯВЛЕНИЯ === */
+  @keyframes slideDownIn {
+    from { transform: translateX(-50%) translateY(-100px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+  }
+  @keyframes popIn {
+    from { transform: translateY(-50%) scale(0.8); opacity: 0; }
+    to { transform: translateY(-50%) scale(1); opacity: 1; }
+  }
+  @keyframes slideUpIn {
+    from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+  }
+
+  /* === ИНТЕРФЕЙС ИГРЫ === */
+  /* Изначально элементы скрыты (opacity 0), чтобы потом красиво появиться */
+  .title { 
+    position: fixed; top: 40px; left: 50%; transform: translateX(-50%); 
+    font-size: clamp(20px, 5vw, 30px); font-weight: 900; color: #2b1b2a; 
+    text-align: center; background: rgba(255,255,255,0.85); padding: 10px 22px; 
+    border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); white-space: nowrap; z-index: 100;
+    opacity: 0; /* Скрыто для анимации */
+  }
+  /* Класс запуска анимации заголовка */
+  .title.animate-in { animation: slideDownIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+  .bottom-bar { 
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); 
+    display: flex; gap: 15px; z-index: 1000; align-items: center; 
+    opacity: 0; /* Скрыто для анимации */
+  }
+  /* Класс запуска анимации бара */
+  .bottom-bar.animate-in { animation: slideUpIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+  
+  .score-board { background: rgba(255,255,255,0.95); padding: 10px 24px; border-radius: 30px; font-size: 15px; font-weight: 800; color: #2b1b2a; box-shadow: 0 8px 25px rgba(255,90,160,0.25); display: flex; align-items: center; gap: 8px; transition: transform 0.15s; white-space: nowrap;}
+  .score-board.pop {  }
+  
+  .wallet-btn { background: linear-gradient(135deg, #ff8da1, #ff3385); width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; border: none; box-shadow: 0 8px 20px rgba(255,51,133,0.4); cursor: pointer; transition: transform 0.2s; position: relative; }
+  .wallet-btn:active { transform: scale(0.9); }
+  .wallet-badge { position: absolute; top: -5px; right: -5px; background: white; color: #ff3385; font-size: 11px; font-weight: 900; padding: 2px 6px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+  
+  .restart-btn { position: fixed; bottom: 130px; left: 50%; transform: translateX(-50%) scale(0.8); background: rgba(255,255,255,0.85); border: 2px solid #ff8da1; color: #ff3385; padding: 10px 24px; border-radius: 25px; font-weight: 800; font-size: 15px; cursor: pointer; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275); z-index: 100; backdrop-filter: blur(5px); box-shadow: 0 4px 15px rgba(255,51,133,0.2); }
+  .restart-btn.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+  .restart-btn:active { transform: translateX(-50%) scale(0.95); }
+
+  /* === КАРТОЧКИ (ОБЩИЕ) === */
+  .deck { 
+    position: relative; width: min(420px, 92vw); height: min(580px, 86vh); 
+    margin: auto; top: 50%; transform: translateY(-50%); 
+    opacity: 0; /* Скрыто для анимации */
+  }
+  /* Класс запуска анимации колоды */
+  .deck.animate-in { animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+  .card {
+	cursor: pointer;
+    position: absolute; left: 50%; top: 50%; 
+    width: 100%; 
+    transform: translate(-50%, -50%); 
+    background: #ffffff; border-radius: 18px; padding: 14px; 
+    border: 1px solid rgba(0,0,0,0.06); 
+    box-shadow: 0 22px 55px rgba(0,0,0,0.16); 
+    display: flex; flex-direction: column; gap: 12px; 
+    touch-action: none; will-change: transform, opacity; 
+  }
+  .card.back1 { transform: translate(-50%, -50%) translate(10px, 10px) rotate(2deg) scale(0.985); opacity: 0.78; filter: blur(0.2px); }
+  .card.back2 { transform: translate(-50%, -50%) translate(-10px, 16px) rotate(-2deg) scale(0.97); opacity: 0.55; filter: blur(0.25px); }
+  
+  .photo { height: 360px; border-radius: 14px; background: radial-gradient(circle at 25% 20%, rgba(255,90,160,0.22), transparent), radial-gradient(circle at 75% 22%, rgba(255,184,77,0.22), transparent), linear-gradient(180deg, rgba(191,233,255,0.55), rgba(255,230,243,0.65)); border: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; font-size: 64px; }
+  .text { min-height: 54px; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 900; font-size: 17px; line-height: 1.35; color: #2b1b2a; padding: 0 8px; }
+  .caption { text-align: center; font-size: 13px; font-weight: 800; color: rgba(43,27,42,0.55); padding-bottom: 2px; }
+  
+  /* Спец-карточки (Золотые) */
+  .card.special { background: linear-gradient(135deg, #fffcf0 0%, #ffffff 100%); border: 2px solid #ffcc00; box-shadow: 0 15px 45px rgba(255,204,0,0.35), 0 0 15px rgba(255,204,0,0.4); }
+  .card.special .photo { background: radial-gradient(circle at 30% 25%, rgba(255,204,0,0.4), transparent), radial-gradient(circle at 70% 30%, rgba(255,90,160,0.3), transparent), linear-gradient(180deg, #fffae6, #ffe6f3); border: 1px solid rgba(255,204,0,0.3); }
+  .card.special .text, .card.special .caption { color: #d62828; }
+  .super-badge { position: absolute; top: -12px; right: -12px; background: linear-gradient(135deg, #ff5e62, #ff9966); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 900; font-size: 14px; box-shadow: 0 4px 12px rgba(255,94,98,0.5); transform: rotate(5deg); animation: pulseBadge 1.5s infinite; z-index: 10; }
+
+  /* Карточка-вопрос */
+  .card.question-card { background: linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%); border: 2px solid #8daed1; }
+  .card.question-card .photo { height: 270px; font-size: 50px; background: #eef6fc; margin-bottom: 5px; }
+  .q-title { text-align: center; font-size: 19px; font-weight: 900; color: #2b4b7a; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+  .q-buttons { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: auto; }
+  .q-btn { border: none; background: linear-gradient(90deg, #6ba4ff, #4d8aff); color: white; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 10px rgba(77,138,255,0.3); transition: transform 0.1s; }
+  .q-btn:active { transform: scale(0.96); }
+
+  /* === Карточка-тапалка (СТИЛЬ КАК У ОБЫЧНЫХ) === */
+  .card.tap-card { cursor: pointer;
+    background: #fff; border: 2px solid #ff8da1; 
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  }
+  .tap-heart-wrapper { 
+    height: 360px; width: 100%; 
+    background: #fff0f5; border-radius: 14px; border: 1px solid rgba(0,0,0,0.05);
+    display: flex; align-items: center; justify-content: center; position: relative; 
+  }
+  .tap-title { min-height: 54px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 20px; font-weight: 900; color: #d62828; }
+  .tap-desc { text-align: center; font-size: 14px; font-weight: 800; color: #ff8da1; padding-bottom: 2px; }
+  .tap-heart { 
+    font-size: 140px; cursor: pointer; transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    -webkit-tap-highlight-color: transparent;
+    background: linear-gradient(to top, #ff3385 0%, #ff3385 var(--fill-percent, 0%), #ffe6f2 var(--fill-percent, 0%), #ffe6f2 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    -webkit-text-stroke: 2px #ff3385; 
+  }
+  .tap-heart:active { transform: scale(0.9); }
+
+  /* === МОДАЛЬНЫЕ ОКНА === */
+  .overlay { position: fixed; inset: 0; background: rgba(30,15,25,0.85); z-index: 99999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; will-change: opacity; }
+  .overlay.active { opacity: 1; pointer-events: auto; }
+  .prize-card { background: linear-gradient(135deg, #fff9e6 0%, #fff 100%); width: min(380px, 90vw); padding: 30px 20px; border-radius: 20px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.4); border: 2px solid #ffb84d; transform: scale(0.85); opacity: 0; transition: transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.3s; display: flex; flex-direction: column; gap: 15px; }
+  .overlay.active .prize-card { transform: scale(1); opacity: 1; }
+  .prize-icon { font-size: 60px; line-height: 1; animation: float 3s ease-in-out infinite; }
+  .prize-title { font-size: 24px; font-weight: 900; color: #ff3385; text-transform: uppercase; }
+  .prize-desc { font-size: 16px; font-weight: 600; color: #5a4b59; line-height: 1.4; min-height: 44px; }
+  .prize-note { font-size: 13px; font-weight: 700; color: #ff8da1; }
+  .btn { border: none; padding: 14px 24px; font-size: 17px; font-weight: 800; border-radius: 30px; cursor: pointer; transition: transform 0.2s; }
+  .btn:active { transform: scale(0.95); }
+  .btn-primary { background: linear-gradient(90deg, #ff3385, #ff8da1); color: white; box-shadow: 0 8px 20px rgba(255,51,133,0.4); }
+  .btn-secondary { background: #f0e6f2; color: #5a4b59; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  
+  .wallet-modal { background: #fff; width: min(400px, 95vw); max-height: 85vh; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 15px; transform: scale(0.9); opacity: 0; transition: transform 0.3s ease, opacity 0.3s; }
+  .overlay.active .wallet-modal { transform: scale(1); opacity: 1; }
+  .wallet-header { display: flex; justify-content: space-between; align-items: center; }
+  .wallet-title { font-size: 22px; font-weight: 900; color: #2b1b2a; }
+  .close-btn { background: none; border: none; font-size: 32px; color: #ccc; cursor: pointer; padding: 0 5px; }
+  .coupons-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 5px; margin-bottom: 5px; -webkit-overflow-scrolling: touch; }
+  .coupons-list::-webkit-scrollbar { width: 6px; }
+  .coupon-item { background: #fdf2f8; border: 2px dashed #ffb8d2; padding: 12px 15px; border-radius: 14px; display: flex; gap: 15px; align-items: center; }
+  .coupon-item.locked { background: #f5f5f5; border: 2px dashed #e0e0e0; filter: grayscale(1); opacity: 0.7; }
+  .coupon-item.locked .c-name { color: #888; }
+  .c-icon { font-size: 28px; }
+  .c-info { display: flex; flex-direction: column; text-align: left; }
+  .c-name { font-weight: 800; font-size: 15px; color: #2b1b2a; }
+  .c-desc { font-size: 12px; font-weight: 600; color: #777; margin-top: 2px; line-height: 1.2; }
+
+
+
+/* Зарядка кнопки */
+.start-btn.charge {
+  animation: btnPulse 0.35s ease;
 }
 
-body {
-  margin: 0;
-  height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(255, 240, 248, 0.9), rgba(255, 255, 255, 0.0)),
-    linear-gradient(180deg, #bfe9ff 0%, #ffe6f3 45%, #fff7d6 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #2b1b2a;
-  overflow: hidden;
+@keyframes btnPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1.08); }
 }
 
-.petal {
-  position: fixed;
-  top: -60px;
-  font-size: 38px;
-  animation: fall linear infinite;
-  cursor: pointer;
-  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.10));
-  z-index: 1;
-}
-@keyframes fall { to { transform: translateY(112vh) rotate(420deg); } }
-
-.particle {
-  position: fixed;
-  font-size: 14px;
-  pointer-events: none;
-  animation: explode 0.9s ease-out forwards;
-  z-index: 2;
-}
-@keyframes explode {
-  to { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; }
+/* Лёгкая тряска */
+.start-btn.shake {
+  animation: btnShake 0.25s;
 }
 
-.score {
-  position: fixed;
-  top: 18px;
-  left: 18px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.6);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.7);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-  font-weight: 800;
-  z-index: 5;
+
+/* финальный взрыв */
+.start-btn.boom {
+  animation: boomBtn 0.6s cubic-bezier(0.2,0.8,0.2,1) forwards;
 }
 
-.container {
-  text-align: center;
-  padding: 20px;
-  z-index: 3;
+@keyframes boomBtn {
+  0% { transform: scale(1.3); opacity: 1; filter: blur(0); }
+  40% { transform: scale(2); opacity: 1; }
+  100% { transform: scale(4); opacity: 0; filter: blur(12px); }
 }
 
-.static-text {
-  margin-bottom: 15px;
-  font-size: 28px;
-  font-weight: 900;
-  text-shadow: 0 0 20px rgba(255, 90, 160, 0.3);
-}
-
-.sub {
-  font-size: 16px;
-  color: rgba(43, 27, 42, 0.7);
-  margin-bottom: 25px;
-}
-
-.text {
-  margin-top: 20px;
-  font-size: 22px;
-  min-height: 1.6em;
+/* Энергия за кнопкой */
+.start-screen::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255,120,170,0.45) 0%, rgba(255,120,170,0.15) 40%, transparent 70%);
+  filter: blur(25px);
   opacity: 0;
-  filter: blur(12px);
-  transform: scale(0.7);
-  transition: 0.25s ease;
-}
-
-.text.show {
-  opacity: 1;
-  filter: blur(0);
-  transform: scale(1);
-}
-
-button {
-  padding: 16px 36px;
-  font-size: 18px;
-  border-radius: 50px;
-  border: none;
-  cursor: pointer;
-  background: linear-gradient(135deg, #ff5aa8, #ffb84d);
-  color: white;
-  box-shadow: 0 10px 20px rgba(255, 90, 160, 0.3);
-  transition: 0.2s;
-}
-button:active { transform: scale(0.95); }
-
-#textBurst {
-  position: fixed;
-  inset: 0;
+  transform: scale(0.6);
+  transition: opacity 0.4s ease, transform 0.4s ease;
   pointer-events: none;
-  z-index: 10;
 }
-  </style>
+
+/* уровень зарядки */
+.start-screen.energy-1::after { opacity: 0.1; transform: scale(1.0); }
+.start-screen.energy-2::after { opacity: 0.2; transform: scale(1.0); }
+.start-screen.energy-3::after { opacity: 0.3; transform: scale(1.0); }
+.start-screen.energy-4::after { opacity: 0.4; transform: scale(1.0); }
+.start-screen.energy-5::after { opacity: 0.5; transform: scale(1.0); }
+.start-screen.energy-6::after { opacity: 0.6; transform: scale(1.0); }
+.start-screen.energy-7::after { opacity: 0.7; transform: scale(1.0); }
+.start-screen.energy-8::after { opacity: 0.8; transform: scale(1.0); }
+.start-screen.energy-9::after { opacity: 0.9; transform: scale(1.0); }
+.start-screen.energy-10::after { opacity: 1.0; transform: scale(1.0); }
+
+  /* АНИМАЦИИ */
+  .flower { position: fixed; top: -20px; font-size: 18px; pointer-events: auto; cursor: pointer; animation: fall linear forwards; z-index: 1; }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+  @keyframes pulseBadge { 0%, 100% { transform: rotate(5deg) scale(1); } 50% { transform: rotate(5deg) scale(1.1); } }
+
+  /* АДАПТИВНОСТЬ */
+  @media (max-width: 480px), (max-height: 760px) {
+    .deck { width: min(420px, 94vw); height: min(560px, 78vh); }
+    .card { padding: 12px; border-radius: 16px; gap: 10px; }
+    .photo, .tap-heart-wrapper { height: min(300px, 42vh); border-radius: 12px; font-size: 56px; }
+    .text, .tap-title { min-height: 46px; font-size: 16px; line-height: 1.25; padding: 0 6px; }
+    .caption, .tap-desc { font-size: 12px; padding-bottom: 0; }
+    .title { top: 18px; padding: 8px 16px; border-radius: 12px; font-size: clamp(18px, 4.5vw, 24px); }
+    .bottom-bar { bottom: 16px; gap: 10px; }
+    .score-board { padding: 8px 16px; font-size: 13px; border-radius: 26px; }
+    .restart-btn { bottom: 92px; }
+    .card.question-card .photo { height: 220px; font-size: 40px; }
+    .q-title { font-size: 16px; min-height: 36px; }
+    .q-btn { padding: 12px; font-size: 14px; }
+    .tap-heart { font-size: 120px; }
+  }
+  @media (max-width: 480px) {
+    .deck { width: min(360px, 86vw); height: min(520px, 74vh); }
+    .card { padding: 10px; } 
+    .photo, .tap-heart-wrapper { height: min(260px, 38vh); }
+    .card.question-card .photo { height: 190px; }
+  }
+  
+.start-counter-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 26px;
+  min-height: 190px;
+  justify-content: center;
+}
+
+.start-counter {
+  font-size: 128px;
+  font-weight: 900;
+  line-height: 0.95;
+  margin-bottom: 10px;
+  color: #ff3385;
+  text-shadow: 0 8px 24px rgba(255, 51, 133, 0.22), 0 0 20px rgba(255, 141, 161, 0.35);
+  transition: color 0.35s ease, text-shadow 0.35s ease, transform 0.35s ease;
+}
+
+.start-counter-text {
+  min-height: 28px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #7a4b63;
+  letter-spacing: 1px;
+  text-shadow: 0 3px 10px rgba(255,255,255,0.65);
+  transition: color 0.35s ease, text-shadow 0.35s ease, transform 0.35s ease;
+}
+
+/* красивое появление новой цифры/даты */
+.start-counter-wrap.counter-switch .start-counter,
+.start-counter-wrap.counter-switch .start-counter-text {
+  animation: counterSwapIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes counterSwapIn {
+  0% { opacity: 0; transform: translateY(-18px) scale(0.88); filter: blur(6px); }
+  60% { opacity: 1; transform: translateY(4px) scale(1.04); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* оформление под "месяцы" */
+.start-counter.theme-8, .start-counter-text.theme-8 { color: #ff5c8a; text-shadow: 0 8px 24px rgba(255,92,138,0.24), 0 0 18px rgba(255,150,190,0.35); } /* июль */
+.start-counter.theme-7, .start-counter-text.theme-7 { color: #ff8a3d; text-shadow: 0 8px 24px rgba(255,138,61,0.24), 0 0 18px rgba(255,190,120,0.35); } /* август */
+.start-counter.theme-6, .start-counter-text.theme-6 { color: #c56cf0; text-shadow: 0 8px 24px rgba(197,108,240,0.24), 0 0 18px rgba(220,170,255,0.35); } /* сентябрь */
+.start-counter.theme-5, .start-counter-text.theme-5 { color: #ff9f43; text-shadow: 0 8px 24px rgba(255,159,67,0.24), 0 0 18px rgba(255,210,140,0.35); } /* октябрь */
+.start-counter.theme-4, .start-counter-text.theme-4 { color: #8c7ae6; text-shadow: 0 8px 24px rgba(140,122,230,0.24), 0 0 18px rgba(185,175,245,0.35); } /* ноябрь */
+.start-counter.theme-3, .start-counter-text.theme-3 { color: #4facfe; text-shadow: 0 8px 24px rgba(79,172,254,0.24), 0 0 18px rgba(150,210,255,0.35); } /* декабрь */
+.start-counter.theme-2, .start-counter-text.theme-2 { color: #00b894; text-shadow: 0 8px 24px rgba(0,184,148,0.24), 0 0 18px rgba(120,235,210,0.35); } /* январь */
+.start-counter.theme-1, .start-counter-text.theme-1 { color: #6c5ce7; text-shadow: 0 8px 24px rgba(108,92,231,0.24), 0 0 18px rgba(170,160,255,0.35); } /* февраль */
+.start-counter.theme-0, .start-counter-text.theme-0 { color: #ff3385; text-shadow: 0 8px 24px rgba(255,51,133,0.28), 0 0 20px rgba(255,141,161,0.45); } /* март */
+
+@media (max-width: 480px), (max-height: 760px) {
+  .start-counter-wrap { min-height: 150px; margin-bottom: 20px; }
+  .start-counter { font-size: 96px; margin-bottom: 8px; }
+  .start-counter-text { font-size: 17px; min-height: 24px; }
+}
+
+@media (max-width: 480px) {
+  .start-counter { font-size: 82px; }
+  .start-counter-text { font-size: 15px; }
+}
+  
+.start-counter-text {
+  white-space: pre-line;
+}
+
+</style>
 </head>
-
 <body>
-  <canvas id="textBurst"></canvas>
 
-  <div class="score" id="scoreBox">
-    🌸 уровень весеннего настроения: <span id="scoreVal">0</span> / <span id="goal">457</span>
+<!-- СТАРТОВЫЙ ЭКРАН -->
+<div class="start-screen" id="startScreen">
+  <div class="start-content">
+    <div class="start-counter-wrap" id="startCounterWrap">
+      <div class="start-counter" id="startCounter">8</div>
+      <div class="start-counter-text" id="startCounterText">До сих пор помню, как пол часа сидел с телефоном и не знал что тебе написать...</div>
+    </div>
+    <button class="start-btn" id="startBtn" onclick="startGame()">Нажми меня</button>
   </div>
+</div>
 
-  <div class="container" id="ui">
-    <div class="static-text">🌷 С первым днём весны, моя маленькая 🌷</div>
-    <div class="sub">Нажимай на лепестки, чтобы накопить весеннее настроение</div>
-    <button id="btn">Люблю тебя ✨</button>
-    <div id="text" class="text"></div>
+<!-- ИГРОВОЙ КОНТЕЙНЕР -->
+<div id="gameUI" class="game-ui-container">
+  <!-- Заголовок -->
+  <div class="title" id="gameTitle">С 8 марта, моя маленькая 🌸</div>
+  <!-- Колода -->
+  <div class="deck" id="deck"></div>
+  <button class="restart-btn" id="restartBtn" onclick="hardReset()">Начать заново</button>
+
+  <!-- Нижний бар -->
+  <div class="bottom-bar" id="bottomBar">
+    <div class="score-board" id="scoreBoard">
+      <span>💖 Уровень весеннего настроения:</span> <span id="scoreText">0 / 20</span>
+    </div>
+    <button class="wallet-btn" onclick="openWallet()">💌<div class="wallet-badge" id="walletBadge">0/10</div></button>
   </div>
+</div>
+
+<!-- Модалки -->
+<div class="overlay" id="prizeOverlay">
+  <div class="prize-card" id="prizeCard">
+    <div class="prize-icon" id="pIcon">💌</div>
+    <div class="prize-title" id="pTitle">Купон</div>
+    <div class="prize-desc" id="pDesc">Описание</div>
+    <div class="prize-note" id="pNote"></div>
+    <button class="btn btn-primary" id="pBtn" onclick="claimPrize()">Забрать!</button>
+  </div>
+</div>
+
+<div class="overlay" id="walletOverlay">
+  <div class="wallet-modal">
+    <div class="wallet-header">
+      <div class="wallet-title">Твои купоны 💖</div>
+      <button class="close-btn" onclick="closeWallet()">×</button>
+    </div>
+    <div class="coupons-list" id="couponsList"></div>
+  </div>
+</div>
 
 <script>
-const TARGET_SCORE = 457;
-function getMessageLines() {
-  return window.innerWidth < 700 ? ["Я", "ТЕБЯ", "ЛЮБЛЮ"] : ["Я ТЕБЯ ЛЮБЛЮ"];
-}
-
-const TEXT_EMOJI = ['🌸','🌷','🌺','💮','🌼','✨']; 
-
-
-const petals = ['🌸','🌷','🌺','💮','🌼','✨','💗','🍀','💖']; 
-
-let score = 0;
-function addScore(amount) {
-  score += amount;
-  scoreVal.textContent = score;
-  if (score >= TARGET_SCORE) {
-    score = TARGET_SCORE;
-    scoreVal.textContent = score;
-    startFinal();
-  }
-}
-
-const scoreVal = document.getElementById('scoreVal');
-const text = document.getElementById('text');
-const btn = document.getElementById('btn');
-const ui = document.getElementById('ui');
-const scoreBox = document.getElementById('scoreBox');
-const canvas = document.getElementById('textBurst');
-const ctx = canvas.getContext('2d', { alpha: true });
-
-const phrases = [
-  "Ты моё самое тёплое весеннее солнце ☀️", "Пусть эта весна принесёт тебе море улыбок 🌸",
-  "С тобой каждый день расцветает по-новому 🌼", "Ты прекраснее любого первоцвета ✨",
-  "Хочу обнимать тебя этой весной ещё чаще 💛", "С тобой даже март становится июнем 🌷",
-  "Ты расцветаешь в моём сердце каждый день 🌺", "Рядом с тобой всё становится светлее 💫",
-  "Ты моя сильнейшая весенняя магия ✨", "С тобой мир пахнет цветами 🌸",
-  "Ты делаешь мою весну настоящей 🌼", "Твоя улыбка ярче любого рассвета 🌅",
-  "С тобой даже ветер становится ласковым 🍃", "Ты моё самое красивое пробуждение 🌞",
-  "Хочу держать твою руку под первым тёплым солнцем 💛", "Ты нежность, которая всегда рядом 🌷",
-  "С тобой хочется смеяться без причины 🌸", "Ты мой самый любимый цветок 🌺",
-  "Каждый день с тобой — как первый день весны 🌼", "Ты наполняешь меня светом ✨",
-  "С тобой даже дождь звучит романтично ☔", "Ты мой самый уютный март 💕",
-  "Рядом с тобой сердце цветёт 🌸", "Ты моё вдохновение и тепло 💫",
-  "С тобой всё вокруг становится мягче 🌷", "Ты моя самая красивая случайность 💖",
-  "Хочу делить с тобой каждый закат 🌅", "Ты весна, которая живёт во мне 🌼",
-  "С тобой хочется строить бесконечные завтра ✨", "Ты моё самое нежное чувство 💛",
-  "С тобой мир кажется добрее 🌸", "Ты причина моих счастливых мыслей 🌷",
-  "С тобой каждый вечер становится особенным 🌙", "Ты моё тихое счастье 💕",
-  "Рядом с тобой я улыбаюсь чаще 🌼", "Ты самое красивое, что случилось со мной 🌸",
-  "С тобой хочется верить в чудеса ✨", "Ты мой любимый человек в этом мире 💖",
-  "С тобой даже обычный день становится праздником 🌷", "Ты моё спокойствие и мой огонь одновременно 🔥",
-  "С тобой сердце бьётся мягче 💛", "Ты моя бесконечная весна 🌸",
-  "Рядом с тобой хочется быть лучше 🌼", "Ты моя самая тёплая мысль 🌷",
-  "С тобой всё обретает смысл ✨", "Ты мой любимый рассвет 💫",
-  "С тобой хочется обнимать весь мир 💕"
+  // === ДАННЫЕ ===
+   const ALL_COUPONS = [
+    { id: 1, icon: "📞", title: "Купон №1", desc: "Долгий звонок<br> говорим сколько захочешь" },
+    { id: 2, icon: "🎬", title: "Купон №2", desc: "Совместный просмотр фильма онлайн<br> (ты выбираешь)" },
+    { id: 3, icon: "🎮", title: "Купон №3", desc: "Вечер совместной игры <br> играем во что ты захочешь" },
+    { id: 4, icon: "🎧", title: "Купон №4", desc: "Длинное голосовое сообщение<br> (с текстом, который ты выберешь)" },
+    { id: 5, icon: "⭐", title: "Купон №5", desc: "Особый купон<br> одно желание на твоё усмотрение" },
+    { id: 6, icon: "💋", title: "Купон №6", desc: "Безлимитные поцелуи при следующей встрече" },
+    { id: 7, icon: "💖", title: "Купон №7", desc: "Купон на долгие обнимашки" },
+    { id: 8, icon: "💆", title: "Купон №8", desc: "Расслабляющий массаж от меня при встрече" },
+    { id: 9, icon: "🍫", title: "Купон №9", desc: "Купон на вкусняшки" },
+    { id: 10, icon: "📸", title: "Купон №10", desc: "Купон на совместную фотосессию при следующей встрече" }
+  ];
+const QUESTIONS = [
+  { q: "Кто самая красивая девочка?", a: ["Конечно я 💅", "Однозначно я 👸"] },
+  { q: "Кто самая очаровательная девочка?", a: ["Я конечно 💖", "Ну obviously я 😌"] },
+  { q: "Кто здесь главный котёнок?", a: ["Я 🐱", "Точно я 🥰"] },
+  { q: "Кто заслуживает обнимашек?", a: ["Яяя 🤗", "Определённо я 💞"] },
+  { q: "Кто сияет ярче всех?", a: ["Я ✨", "Ну конечно я 🌟"] },
+  { q: "Кто самая милая?", a: ["Я 🥺", "Я и только я 😇"] },
+  { q: "Кто моё солнышко?", a: ["Я ☀️", "Конечно я 🌞"] },
+  { q: "Кто самая прекрасная?", a: ["Я 💐", "Естественно я 👑"] },
+  { q: "Кто заслуживает поцелуев?", a: ["Я 💋", "Определённо я 😘"] },
+  { q: "Кто самая лучшая девочка?", a: ["Я ❤️", "Это же я 🥰"] },
+  { q: "Кто самая любимая?", a: ["Я 💖", "Я конечно 💕"] },
+  { q: "Кто моя маленькая девочка?", a: ["Я 🍭", "Конечно я 🍬"] },
+  { q: "Кто самый красивый цветочек?", a: ["Я 🌸", "Я конечно 🌷"] },
+  { q: "Кто заслуживает комплиментов?", a: ["Я 😌", "Ну конечно я 💗"] },
+  { q: "Кто самая очаровательная принцесса?", a: ["Я 👸", "Естественно я ✨"] },
+  { q: "Кто самая добрая?", a: ["Я 💗", "Конечно я 🤍"] },
+  { q: "Кто самый милый котёнок?", a: ["Я 🐾", "Я конечно 🐱"] },
+  { q: "Кто всегда радует мир?", a: ["Я 🌍", "Конечно я 💫"] },
+  { q: "Кто делает день лучше?", a: ["Я ☀️", "Я конечно 🌼"] },
+  { q: "Кто самая замечательная?", a: ["Я 💐", "Конечно я 🌟"] },
+  { q: "Кто самая нежная?", a: ["Я 🥰", "Конечно я 💞"] },
+  { q: "Кто самая очаровательная?", a: ["Я 💖", "Я конечно 🥺"] },
+  { q: "Кто заслуживает больше любви?", a: ["Я ❤️", "Конечно я 💕"] },
+  { q: "Кто самая прекрасная сегодня?", a: ["Я 🌸", "Конечно я 👑"] },
+  { q: "Кто самый милый человек?", a: ["Я 😇", "Я конечно 🥰"] },
+  { q: "Кто делает мир красивее?", a: ["Я 🌷", "Конечно я 🌺"] },
+  { q: "Кто самая любимая девочка?", a: ["Я 💞", "Конечно я 💖"] },
+  { q: "Кто всегда сияет?", a: ["Я ✨", "Конечно я 🌟"] },
+  { q: "Кто самая чудесная?", a: ["Я 💗", "Конечно я 🌸"] },
+  { q: "Кто самая красивая принцесса?", a: ["Я 👑", "Конечно я 👸"] },
+  { q: "Кто заслуживает обнимашек прямо сейчас?", a: ["Я 🤗", "Конечно я 🥰"] },
+  { q: "Кто самая добрая?", a: ["Я 💗", "Конечно я 💖"] },
+  { q: "Кто самый милый человечек?", a: ["Я 🥺", "Конечно я 😇"] },
+  { q: "Кто самая яркая звёздочка?", a: ["Я ⭐", "Конечно я 🌟"] },
+  { q: "Кто сегодня самая прекрасная?", a: ["Я 🌸", "Конечно я 🌷"] },
+  { q: "Кто самый лучший котёнок?", a: ["Я 🐱", "Конечно я 🐾"] },
+  { q: "Кто самая очаровательная?", a: ["Я 💕", "Конечно я 💖"] },
+  { q: "Кто делает день счастливым?", a: ["Я ☀️", "Конечно я 🌼"] },
+  { q: "Кто самая нежная девочка?", a: ["Я 💞", "Конечно я 🥰"] },
+  { q: "Кто самая милая принцесса?", a: ["Я 👸", "Конечно я 👑"] },
+  { q: "Кто самый прекрасный цветочек?", a: ["Я 🌺", "Конечно я 🌸"] },
+  { q: "Кто самая очаровательная девочка?", a: ["Я 😌", "Конечно я 🥰"] },
+  { q: "Кто самая лучшая на свете?", a: ["Я 🌍", "Конечно я 💖"] },
+  { q: "Кто самый красивый ангелочек?", a: ["Я 😇", "Конечно я 💫"] },
+  { q: "Кто самая прекрасная девочка?", a: ["Я 💐", "Конечно я 🌸"] },
+  { q: "Кто самый милый человечек на планете?", a: ["Я 🥺", "Конечно я 💖"] }
 ];
-
-btn.onclick = () => {
-  addScore(2);
-  text.classList.remove('show');
-  setTimeout(() => {
-    text.textContent = phrases[Math.floor(Math.random() * phrases.length)];
-    text.classList.add('show');
-  }, 150);
-};
-
-function createPetal() {
-  const p = document.createElement('div');
-  p.className = 'petal';
-  p.textContent = petals[Math.floor(Math.random() * petals.length)];
-  p.style.left = (Math.random() * 90 + 5) + 'vw';
-  p.style.animationDuration = (5 + Math.random() * 5) + 's';
-  p.onclick = (e) => { explode(e.clientX, e.clientY); addScore(1); p.remove(); };
-  document.body.appendChild(p);
-  setTimeout(() => p.remove(), 8000);
-}
-let petalTimer = setInterval(createPetal, 600);
-
-function explode(x, y) {
-  for (let i = 0; i < 8; i++) {
-    const part = document.createElement('div');
-    part.className = 'particle';
-    part.textContent = TEXT_EMOJI[Math.floor(Math.random() * TEXT_EMOJI.length)];
-    part.style.left = x + 'px'; part.style.top = y + 'px';
-    part.style.setProperty('--x', (Math.random() * 100 - 50) + 'px');
-    part.style.setProperty('--y', (Math.random() * 100 - 50) + 'px');
-    document.body.appendChild(part);
-    setTimeout(() => part.remove(), 900);
-  }
-}
-
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
-function getTargetPoints(lines) {
-  const offscreen = document.createElement('canvas');
-  const octx = offscreen.getContext('2d');
-  offscreen.width = window.innerWidth;
-  offscreen.height = window.innerHeight;
-
-  const fontSize = Math.min(window.innerWidth / 5, 120);
-  octx.font = `900 ${fontSize}px sans-serif`;
-  octx.textAlign = 'center';
-  octx.textBaseline = 'middle';
-
-  const cy = offscreen.height / 2;
-  const lineGap = fontSize * 1.1;
-
-  lines.forEach((line, i) => {
-    const y = cy - ((lines.length - 1) * lineGap) / 2 + (i * lineGap);
-    octx.fillText(line, offscreen.width / 2, y);
-  });
-
-  const imageData = octx.getImageData(0, 0, offscreen.width, offscreen.height).data;
-  const step = Math.max(9, Math.floor(fontSize / 15));
-  const points = [];
-
-  for (let y = 0; y < offscreen.height; y += step) {
-    for (let x = 0; x < offscreen.width; x += step) {
-      if (imageData[(y * offscreen.width + x) * 4 + 3] > 128) {
-        points.push({ x, y });
-      }
-    }
-  }
-  // Рандомизируем порядок точек, чтобы распределение эмодзи было случайным
-  return points.sort(() => Math.random() - 0.5);
-}
-
-function startFinal() {
-  clearInterval(petalTimer);
-  ui.style.opacity = '0';
-  scoreBox.style.opacity = '0';
-  setTimeout(() => { ui.remove(); scoreBox.remove(); }, 500);
-
-  const targetPoints = getTargetPoints(getMessageLines());
-  const w = window.innerWidth;
+  const cards = [
+    "С тобой рядом даже обычный день становится каким-то особенным.", "Мне нравится, как ты умеешь делать атмосферу вокруг себя уютной.",
+    "У тебя есть редкое умение — делать людей рядом с собой счастливее.", "Твоя улыбка — одна из тех вещей, которые могут мгновенно улучшить настроение.",
+    "В тебе удивительно сочетаются нежность и сила характера.", "Ты умеешь быть искренней, и это делает тебя по-настоящему особенной.",
+    "Мне нравится, как ты смотришь на мир — с интересом и живыми эмоциями.", "С тобой легко говорить обо всём и так же легко просто молчать.",
+    "У тебя очень тёплая энергия, рядом с тобой всегда спокойно.", "Ты из тех людей, с которыми хочется делиться хорошими новостями.",
+    "У тебя есть особая красота — та, которую замечаешь не только глазами.", "Твоя доброта чувствуется даже в мелочах.",
+    "Ты умеешь поддержать так, что сразу становится легче.", "Иногда достаточно просто услышать твой голос, чтобы настроение стало лучше.",
+    "В тебе есть какая-то естественная элегантность и лёгкость.", "Ты умеешь быть настоящей, и это очень ценное качество.",
+    "Мне нравится, как ты смеёшься — в этом столько искренности.", "Ты умеешь создавать вокруг себя атмосферу тепла.",
+    "С тобой даже простые разговоры становятся интересными.", "Ты из тех людей, которые делают мир немного лучше просто своим присутствием.",
+    "В тебе есть особая мягкость, которая притягивает людей.", "Ты умеешь быть внимательной к другим, и это очень красиво.",
+    "У тебя удивительно тёплый взгляд.", "Твоя улыбка способна растопить даже самый тяжёлый день.",
+    "Ты умеешь радоваться мелочам, и это вдохновляет.", "С тобой рядом хочется быть лучше.",
+    "Ты умеешь слушать так, что чувствуешь себя по-настоящему понятым.", "У тебя очень приятная и спокойная энергия.",
+    "В тебе есть что-то очень светлое.", "Ты умеешь делать даже обычные моменты запоминающимися.",
+    "В твоём характере есть редкое сочетание мягкости и уверенности.", "Ты умеешь находить красоту в простых вещах.",
+    "Твоё присутствие делает пространство вокруг уютнее.", "Ты умеешь поддержать так, что это запоминается надолго.",
+    "У тебя очень искренние эмоции, и это чувствуется.", "Ты умеешь быть собой, и это невероятно привлекательно.",
+    "С тобой легко чувствовать себя спокойно.", "Ты умеешь вдохновлять даже без особых слов.",
+    "У тебя очень тёплая и добрая улыбка.", "В тебе есть какая-то естественная гармония.",
+    "Ты умеешь делать людей рядом с собой счастливее.", "Твоя искренность — одно из твоих самых красивых качеств.",
+    "Ты умеешь создавать атмосферу уюта вокруг себя.", "У тебя есть редкая способность делать день лучше.",
+    "Ты очень светлый человек.", "С тобой приятно даже просто проводить время.",
+    "У тебя есть особое очарование.", "Ты умеешь поддерживать и вдохновлять одновременно.",
+    "В тебе есть удивительное спокойствие.", "Ты умеешь быть настоящей, и это делает тебя особенной."
+  ];
   
-  // Добавляем случайные размеры и легкое смещение (jitter)
-  const particles = targetPoints.map(p => {
-    const jitter = 5; // Смещение в пикселях для органичности
-    const sizes = w < 600 ? [13, 15, 17] : [16, 18, 20];
-    const size = sizes[Math.floor(Math.random() * sizes.length)];
-    const char = TEXT_EMOJI[Math.floor(Math.random() * TEXT_EMOJI.length)];
+  const emojis = ["🌷", "✨", "💐", "💖", "🌸"];
+  const captions = ["моя любимая", "котёнок", "солнышко", "для тебя", "каждый день", "8 марта"];
+const specialCards = [
+  "А ещё сегодня 9 месяцев❤️",
+  "Ты самое прекрасное, что со мной случалось 🌟",
+  "Ради тебя я готов на всё и даже больше 🔥",
+  "Ты делаешь этот мир ярче каждую секунду ✨",
+  "Моя любовь к тебе больше, чем вся эта вселенная 🌌",
+  "Иногда я думаю, чем я заслужил такую девушку 💖",
+  "Ты моя самая любимая случайность в жизни ✨",
+  "Если бы можно было выбрать снова, я бы выбрал тебя ещё раз ❤️",
+  "С тобой всё становится каким-то правильным 🌸",
+  "Рядом с тобой даже обычные моменты становятся счастливыми 💫",
+  "Иногда я просто смотрю на тебя и понимаю, как мне повезло 💖",
+  "С тобой хочется прожить ещё миллион таких же моментов ✨",
+  "Ты моя любимая история в этой жизни 📖",
+  "С тобой мир становится мягче и теплее 🌸",
+  "Если счастье можно было бы описать, оно бы было похоже на тебя 💕",
+  "С тобой даже тишина становится уютной ✨",
+  "Я бы снова прошёл весь путь, лишь бы встретить тебя 🌌",
+  "Ты мой самый красивый поворот судьбы 🌟",
+  "С тобой даже обычный день становится особенным 💫",
+  "Иногда мне кажется, что ты немного волшебная ✨",
+  "Ты моё маленькое чудо 💖",
+  "Каждый день с тобой это подарок 🌷"
+];
+  
+  const specialEmojis = ["❤️", "🌟", "🔥", "✨", "🌌", "👑", "💝"];
+  const specialCaptions = ["особенная", "самая лучшая", "моя маленькая", "котёнок", "солнышко"];
+
+  // === СОСТОЯНИЕ ===
+  const deck = document.getElementById('deck'), scoreBoard = document.getElementById('scoreBoard'), scoreText = document.getElementById('scoreText');
+  const prizeOverlay = document.getElementById('prizeOverlay'), walletOverlay = document.getElementById('walletOverlay'), restartBtn = document.getElementById('restartBtn');
+  
+  const STACK_SIZE = 3, GOAL = 20; 
+  const stackEls = [];
+  let score = 0, pulling = false, startX = 0, startY = 0, dx = 0, dy = 0, moved = false, pid = null;
+  let cardsSinceLastSpecial = 0; 
+  
+  let unlockedCoupons = JSON.parse(localStorage.getItem('8march_coupons')) || [];
+  let isFinalUnlocked = localStorage.getItem('8march_final') === 'true';
+  let isGameStarted = localStorage.getItem('8march_started') === 'true'; // Флаг старта
+  let isPrizeTriggered = false, isInfiniteMode = isFinalUnlocked, pendingFinal = false;
+
+  const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+  const saveCoupons = () => { localStorage.setItem('8march_coupons', JSON.stringify(unlockedCoupons)); document.getElementById('walletBadge').innerText = `${unlockedCoupons.length}/${ALL_COUPONS.length}`; };
+
+  // === ЭФФЕКТЫ ===
+  function spawnFlower() {
+    const el = document.createElement("div"); el.className = "flower"; el.textContent = rand(["🌸", "🌷", "✨"]);
+    el.style.left = `${Math.random() * 100}vw`; el.style.fontSize = `${14 + Math.random() * 10}px`;
+    el.style.opacity = (0.35 + Math.random() * 0.45).toFixed(2); el.style.animationDuration = `${6 + Math.random() * 6}s`;
     
-    return {
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      tx: p.x + (Math.random() * jitter - jitter/2), 
-      ty: p.y + (Math.random() * jitter - jitter/2),
-      size: size,
-      char: char,
-      // Ключ для сортировки (группируем по символу И размеру)
-      sortKey: char + size,
-      delay: Math.random() * 600
+    el.onclick = () => {
+       score += 1; // +1 за цветок
+       updateScoreUI();
+       heartBurst(el.getBoundingClientRect().left, el.getBoundingClientRect().top, 5, 30, "✨");
+       el.remove();
     };
-  });
 
-  // Сортировка для минимизации переключений контекста Canvas
-  particles.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+    document.body.appendChild(el); setTimeout(() => el.remove(), 13000);
+  }
+  setInterval(spawnFlower, 700);
 
-  const startTime = performance.now();
-  const duration = 2500;
-
-  function animate(now) {
-    const elapsed = now - startTime;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.globalAlpha = 1;
-
-    let finished = true;
-    let currentKey = "";
-
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-      const pElapsed = Math.max(0, elapsed - p.delay);
-      const progress = Math.min(pElapsed / (duration - 500), 1);
-      const ease = 1 - Math.pow(1 - progress, 3);
-
-      const curX = p.x + (p.tx - p.x) * ease;
-      const curY = p.y + (p.ty - p.y) * ease;
-
-      // Обновляем шрифт только при смене ключа (символ + размер)
-      if (p.sortKey !== currentKey) {
-        ctx.font = `${p.size}px serif`;
-        currentKey = p.sortKey;
-      }
-
-      ctx.fillText(p.char, curX, curY);
-      if (progress < 1) finished = false;
-    }
-
-    if (!finished || elapsed < duration) {
-      requestAnimationFrame(animate);
-    } else {
-      // Финальная статичная отрисовка
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      let lastKey = "";
-      for (let p of particles) {
-        if (p.sortKey !== lastKey) {
-          ctx.font = `${p.size}px serif`;
-          lastKey = p.sortKey;
-        }
-        ctx.fillText(p.char, p.tx, p.ty);
-      }
+  function heartBurst(x, y, amount = 12, spread = 55, symbol = "❤️") {
+    for (let i = 0; i < amount; i++) {
+      const h = document.createElement("div"); h.textContent = symbol;
+      h.style.position = "fixed"; h.style.left = x + "px"; h.style.top = y + "px";
+      h.style.fontSize = `${16 + Math.random() * 15}px`; h.style.pointerEvents = "none"; h.style.zIndex = "999999";
+      const angle = Math.random() * Math.PI * 2, dist = 40 + Math.random() * spread;
+      h.animate([ { transform: "translate(-50%, -50%) scale(1)", opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px)) scale(0.6)`, opacity: 0 } ], { duration: 800 + Math.random() * 400, easing: "ease-out" });
+      document.body.appendChild(h); setTimeout(() => h.remove(), 1200);
     }
   }
-  requestAnimationFrame(animate);
+
+  // === ЛОГИКА СТАРТА ===
+
+function startGame() {
+  const startBtn = document.getElementById('startBtn');
+  const startScr = document.getElementById('startScreen');
+  const gameUI = document.getElementById('gameUI');
+  const startCounter = document.getElementById('startCounter');
+  const startCounterText = document.getElementById('startCounterText');
+  const startCounterWrap = document.getElementById('startCounterWrap');
+
+  const steps = [
+    { n: 8, text: 'До сих пор помню, как пол часа сидел с телефоном и не знал что тебе написать...', theme: 'theme-8' },
+    { n: 7, text: '19ое июня 2025 года ты отправила свой первый кружок', theme: 'theme-7' },
+    { n: 6, text: 'А ты помнишь, с чего началась традиция ежедневных праздников?\nЭто был международный день куриных крылышек, 1го июля 2025 года', theme: 'theme-6' },
+    { n: 5, text: '9го сентября произошла наша вторая первая встреча\nэто было так волнительно', theme: 'theme-5' },
+    { n: 4, text: '9го ноября был наш первый совместный просмотр мультика))\nМы смотрели Коралину в стране кошмаров', theme: 'theme-4' },
+    { n: 3, text: 'В ночь с 17го на 18ое ноября, наш первый созвон в тг, продлившийся 51 минуту\nВ эту ночь мы играли в gorogoa', theme: 'theme-3' },
+    { n: 2, text: '7го декабря было твоё первое "я тебя люблю 💖"', theme: 'theme-2' },
+    { n: 1, text: '16го декабря впервые появился этот сайт\nизначально это была просто кнопка, показывающая сообщение "я тебя люблю" на ста разных языках\nно теперь это нечто большее', theme: 'theme-1' },
+    { n: 0, text: 'А сегодня уже ровно 9 месяцев с того самого воскресенья\nС международным женским днём, моя маленькая💐\nЛюблю тебя 💖', theme: 'theme-0' }
+  ];
+
+  let press = parseInt(startBtn.dataset.press || '0', 10) + 1;
+  startBtn.dataset.press = press;
+
+  const currentIndex = Math.min(press, steps.length - 1);
+  const currentStep = steps[currentIndex];
+
+  // рост кнопки
+  let scale = 1;
+  startBtn.style.transform = `scale(${scale})`;
+
+  // тряска кнопки
+  startBtn.classList.remove('shake');
+  void startBtn.offsetWidth;
+  startBtn.classList.add('shake');
+
+  // зарядка фона
+  startScr.classList.remove('energy-1', 'energy-2', 'energy-3');
+  if (press <= 3) startScr.classList.add('energy-1');
+  if (press > 3) startScr.classList.add('energy-1');
+
+  // красивая смена цифры и даты
+  startCounterWrap.classList.remove('counter-switch');
+  void startCounterWrap.offsetWidth;
+  startCounterWrap.classList.add('counter-switch');
+
+  startCounter.className = 'start-counter';
+  startCounterText.className = 'start-counter-text';
+
+  startCounter.classList.add(currentStep.theme);
+  startCounterText.classList.add(currentStep.theme);
+
+  startCounter.textContent = currentStep.n;
+  startCounterText.textContent = currentStep.text;
+
+  // Игра запускается ТОЛЬКО после клика, когда уже показан 0
+  // То есть:
+  // 1-й клик -> 7
+  // ...
+  // 8-й клик -> 0
+  // 9-й клик -> запуск
+  if (press <= 8) return;
+
+  if (startBtn.dataset.started === 'true') return;
+  startBtn.dataset.started = 'true';
+
+  localStorage.setItem('8march_started', 'true');
+  isGameStarted = true;
+
+  startBtn.classList.add('boom');
+
+  setTimeout(() => {
+    startScr.classList.add('fade-out');
+  }, 250);
+
+  setTimeout(() => {
+    startScr.classList.remove('active');
+    gameUI.classList.add('visible');
+    ensureStack();
+
+    setTimeout(() => document.getElementById('gameTitle').classList.add('animate-in'), 100);
+    setTimeout(() => document.getElementById('deck').classList.add('animate-in'), 300);
+    setTimeout(() => document.getElementById('bottomBar').classList.add('animate-in'), 500);
+  }, 700);
 }
+
+
+  // Функция для "мгновенного" показа, если уже заходили (без анимаций)
+  function showGameInstantly() {
+    document.getElementById('gameUI').classList.add('visible');
+    ensureStack();
+    // Просто делаем видимыми без анимации выезда
+    document.getElementById('gameTitle').style.opacity = '1';
+    document.getElementById('deck').style.opacity = '1';
+    document.getElementById('bottomBar').style.opacity = '1';
+  }
+
+  function showPrizeModal(icon, title, desc, note, isDuplicate) {
+    document.getElementById('pIcon').innerHTML = icon; document.getElementById('pTitle').innerText = title;
+    document.getElementById('pDesc').innerHTML = desc; document.getElementById('pNote').innerText = note;
+    const btn = document.getElementById('pBtn');
+    btn.innerText = isDuplicate ? "Искать дальше" : "Ура!"; btn.className = isDuplicate ? "btn btn-secondary" : "btn btn-primary";
+    setTimeout(() => prizeOverlay.classList.add("active"), 400);
+  }
+
+  function triggerSuperPrize() {
+    const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+    for (let i = 0; i < 3; i++) setTimeout(() => heartBurst(cx, cy, 30, window.innerWidth/1.5, rand(["🌸", "✨", "💖", "🎉"])), i * 150);
+
+    if (unlockedCoupons.length >= ALL_COUPONS.length) {
+      pendingFinal = true;
+      return showPrizeModal("💖", "Поздравляю с 8 марта!", "С праздником тебя, мой любимый маффинчик с травкой.<br> Я очень сильно тебя люблю 💕", "Все купоны доступны для просмотра в кошельке!", false);
+    }
+
+    const unowned = ALL_COUPONS.filter(c => !unlockedCoupons.includes(c.id)), owned = ALL_COUPONS.filter(c => unlockedCoupons.includes(c.id));
+    const randomCoupon = (unowned.length > 0 && Math.random() < 0.85) ? rand(unowned) : (owned.length > 0 ? rand(owned) : rand(unowned));
+    
+    if (unlockedCoupons.includes(randomCoupon.id)) {
+      showPrizeModal("😅", "Дубликат...", `Тебе выпал "${randomCoupon.title}", но он у тебя уже есть!`, "Свайпай дальше, чтобы найти оставшиеся купоны!", true);
+    } else {
+      unlockedCoupons.push(randomCoupon.id); saveCoupons();
+      showPrizeModal(randomCoupon.icon, "Новый Купон!", `<b>${randomCoupon.title}</b><br><br>${randomCoupon.desc}`, "Сохранено в твой кошелек 💌", false);
+    }
+  }
+
+  function claimPrize() {
+    const btnRect = document.getElementById('pBtn').getBoundingClientRect();
+    heartBurst(btnRect.left + btnRect.width/2, btnRect.top + btnRect.height/2, 40, 300, "💖");
+    prizeOverlay.classList.remove("active"); score = 0; isPrizeTriggered = false;
+    if (pendingFinal) { pendingFinal = false; isInfiniteMode = true; localStorage.setItem('8march_final', 'true'); restartBtn.classList.add('show'); }
+    updateScoreUI();
+  }
+
+  function renderWalletHTML() {
+    document.getElementById('couponsList').innerHTML = ALL_COUPONS.map(c => {
+      const isUnlocked = unlockedCoupons.includes(c.id);
+      return `<div class="coupon-item ${isUnlocked ? '' : 'locked'}"><div class="c-icon">${isUnlocked ? c.icon : '🔒'}</div><div class="c-info"><div class="c-name">${c.title}</div><div class="c-desc">${isUnlocked ? c.desc : 'Свайпай, чтобы открыть этот купон...'}</div></div></div>`;
+    }).join("");
+  }
+
+  function openWallet() { renderWalletHTML(); requestAnimationFrame(() => walletOverlay.classList.add('active')); }
+  function closeWallet() { walletOverlay.classList.remove('active'); }
+
+  function hardReset() {
+    if (confirm("Точно хочешь удалить все собранные купоны и начать игру заново?")) {
+      unlockedCoupons = []; 
+      localStorage.removeItem('8march_coupons'); 
+      localStorage.removeItem('8march_final'); 
+      localStorage.removeItem('8march_started'); // Сброс старта
+      saveCoupons();
+      // Перезагрузка страницы
+      location.reload(); 
+    }
+  }
+
+  // --- ОБРАБОТЧИКИ КАРТОЧЕК ---
+  
+  // 1. Вопрос (+2 очка)
+  function onQuestionAnswer(btn, cardEl) {
+    const rect = btn.getBoundingClientRect(); heartBurst(rect.left + rect.width/2, rect.top + rect.height/2, 15, 60, "✨");
+    score += 2; updateScoreUI();
+    cardEl.style.transition = "transform 0.4s ease, opacity 0.3s ease"; cardEl.style.transform = "translate(-50%, -150%) rotate(-5deg)"; cardEl.style.opacity = "0";
+    if (!isInfiniteMode && score >= GOAL && !isPrizeTriggered) { isPrizeTriggered = true; setTimeout(triggerSuperPrize, 600); }
+    setTimeout(() => { removeTopCard(); }, 350);
+  }
+
+  // 2. Тапалка (+5 очков)
+  function onHeartTap(heartEl, cardEl, descEl) {
+    let taps = parseInt(heartEl.dataset.taps || 0) + 1;
+    heartEl.dataset.taps = taps;
+    
+    // Анимация заполнения сердца (через CSS переменную)
+    let percent = taps * 10;
+    heartEl.style.setProperty('--fill-percent', percent + '%');
+    
+    // Обновляем текст (обратный отсчет)
+    let left = 10 - taps;
+    if (left > 0) descEl.innerText = `Нажми ${left} раз`;
+    else descEl.innerText = "Готово!";
+
+    let scale = 1 + (taps * 0.05); heartEl.style.transform = `scale(${scale})`;
+    setTimeout(() => heartEl.style.transform = `scale(${scale - 0.02})`, 100);
+    
+    const rect = heartEl.getBoundingClientRect(); heartBurst(rect.left + rect.width/2, rect.top + rect.height/2, 5, 40, "💗");
+
+    if (taps >= 10) { // Победа
+      heartBurst(rect.left + rect.width/2, rect.top + rect.height/2, 30, 150, "💖");
+      score += 5; updateScoreUI();
+      if (!isInfiniteMode && score >= GOAL && !isPrizeTriggered) { isPrizeTriggered = true; setTimeout(triggerSuperPrize, 600); }
+      
+      cardEl.style.transition = "transform 0.5s ease, opacity 0.5s"; cardEl.style.transform = "scale(1.5)"; cardEl.style.opacity = "0";
+      setTimeout(() => { removeTopCard(); }, 400);
+    }
+  }
+
+  function removeTopCard() {
+    stackEls[0].remove(); stackEls.shift(); stackEls.push(createCard(false));
+    if (stackEls[0]) { stackEls[0].style.transition = 'none'; stackEls[0].style.transform = 'translate(-50%,-50%)'; requestAnimationFrame(() => stackEls[0].style.transition = 'transform 220ms ease, opacity 220ms ease'); }
+    layout(); attachTopHandlers();
+  }
+
+function createCard(isTop) {
+  const el = document.createElement('div');
+  cardsSinceLastSpecial++;
+
+  let cardType = 'normal';
+
+  // Логика спавна: минимум 3 обычных после последней особой
+  if (cardsSinceLastSpecial > 3) {
+    if (Math.random() < 0.3) {
+      const r = Math.random();
+      if (r < 0.5) cardType = 'question';
+      else if (r < 0.8) cardType = 'gold';
+      else cardType = 'tap';
+      cardsSinceLastSpecial = 0;
+    }
+  }
+
+  if (cardType === 'tap') {
+    el.className = 'card tap-card';
+    el.innerHTML = `
+      <div class="super-badge" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">🔥 Жми! (+5)</div>
+      <div class="tap-title">Наполни сердце!</div>
+      <div class="tap-heart-wrapper">
+        <div class="tap-heart">❤</div>
+      </div>
+      <div class="tap-desc">Нажми 10 раз</div>
+    `;
+
+    const heart = el.querySelector('.tap-heart');
+    const desc = el.querySelector('.tap-desc');
+
+    // клик по сердцу
+    heart.onclick = (e) => {
+      e.stopPropagation();
+      onHeartTap(heart, el, desc);
+    };
+
+    // клик по карточке
+    el.onclick = () => {
+      onHeartTap(heart, el, desc);
+    };
+
+  } else if (cardType === 'question') {
+    el.className = 'card question-card';
+    const qData = rand(QUESTIONS);
+    el.innerHTML = `
+      <div class="super-badge" style="background: linear-gradient(135deg, #6ba4ff, #4d8aff);">❓ Вопрос (+2)</div>
+      <div class="photo">🤔</div>
+      <div class="q-title">${qData.q}</div>
+      <div class="q-buttons">
+        <button class="q-btn">${qData.a[0]}</button>
+        <button class="q-btn">${qData.a[1] || "Да!"}</button>
+      </div>
+    `;
+    el.querySelectorAll('.q-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        onQuestionAnswer(btn, el);
+      };
+    });
+
+  } else if (cardType === 'gold') {
+    el.className = 'card special';
+    el.innerHTML = `
+      <div class="super-badge">🌟 Особая (+3)</div>
+      <div class="photo">${rand(specialEmojis)}</div>
+      <div class="text">${rand(specialCards)}</div>
+      <div class="caption">${rand(specialCaptions)}</div>
+    `;
+
+  } else {
+    el.className = 'card';
+    el.innerHTML = `
+      <div class="photo">${rand(emojis)}</div>
+      <div class="text">${rand(cards)}</div>
+      <div class="caption">${rand(captions)}</div>
+    `;
+  }
+
+  el.style.transition = isTop ? 'none' : 'transform 220ms ease, opacity 220ms ease';
+  deck.appendChild(el);
+  return el;
+}
+
+  function layout() {
+    stackEls.forEach((el, i) => { 
+      el.className = el.className.replace(/back1|back2/g, '').trim(); 
+      el.style.zIndex = 100 - i; 
+      if (i === 1) el.classList.add('back1'); 
+      if (i === 2) el.classList.add('back2'); 
+    });
+  }
+
+  function ensureStack() { while (stackEls.length < STACK_SIZE) stackEls.push(createCard(stackEls.length === 0)); layout(); attachTopHandlers(); }
+
+  function attachTopHandlers() {
+    stackEls.forEach(el => { el.onpointerdown = el.onpointermove = el.onpointerup = el.onpointercancel = null; });
+    const top = stackEls[0]; if (!top) return;
+
+    // Вопрос и Тапалку свайпать нельзя
+    if (top.classList.contains('question-card') || top.classList.contains('tap-card')) return;
+
+    top.onpointerdown = e => {
+      if (isPrizeTriggered || prizeOverlay.classList.contains('active') || walletOverlay.classList.contains('active')) return;
+      pulling = true; moved = false; pid = e.pointerId; top.setPointerCapture(pid);
+      startX = e.clientX; startY = e.clientY; dx = dy = 0; top.style.transition = 'none';
+    };
+    top.onpointermove = e => {
+      if (!pulling || e.pointerId !== pid) return;
+      dx = e.clientX - startX; dy = e.clientY - startY; if (Math.abs(dx) + Math.abs(dy) > 6) moved = true;
+      top.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${dx * 0.06}deg)`;
+    };
+    top.onpointerup = e => {
+      if (!pulling || e.pointerId !== pid) return; pulling = false;
+      const shouldSwipe = moved && Math.abs(dx) > 90;
+      top.style.transition = 'transform 220ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease';
+      if (shouldSwipe) swipeOut(top, dx > 0 ? 1 : -1); else { top.style.transform = 'translate(-50%,-50%)'; setTimeout(() => top.style.transition = 'transform 220ms ease, opacity 220ms ease', 0); }
+    };
+    top.onpointercancel = () => { pulling = false; top.style.transition = 'transform 220ms ease'; top.style.transform = 'translate(-50%,-50%)'; };
+  }
+
+  function swipeOut(el, dir) {
+    const isSpecial = el.classList.contains("special");
+    heartBurst(window.innerWidth/2, window.innerHeight/2, isSpecial ? 22 : 12);
+    // +1 за обычную, +3 за золотую
+    score += isSpecial ? 3 : 1; 
+    updateScoreUI();
+    if (!isInfiniteMode && score >= GOAL && !isPrizeTriggered) { isPrizeTriggered = true; setTimeout(triggerSuperPrize, 300); }
+    el.style.opacity = '0'; el.style.transform = `translate(calc(-50% + ${dir * window.innerWidth * 0.9}px), calc(-50% + ${dy}px)) rotate(${dir * 18}deg)`;
+    setTimeout(() => { removeTopCard(); dx = dy = 0; }, 200);
+  }
+
+  function updateScoreUI() {
+    scoreText.innerHTML = isInfiniteMode ? `${score} / &infin;` : `${Math.min(score, GOAL)} / ${GOAL}`;
+    scoreBoard.classList.remove('pop'); void scoreBoard.offsetWidth; scoreBoard.classList.add('pop');
+  }
+
+  // --- ИНИЦИАЛИЗАЦИЯ ---
+  window.onload = () => { 
+    saveCoupons(); 
+    if (isInfiniteMode) restartBtn.classList.add('show'); 
+    
+    // ПРОВЕРКА: Если игра уже была запущена
+    if (isGameStarted) {
+      // Уже играли - показываем сразу, без анимаций входа
+      showGameInstantly();
+    } else {
+      // Первый раз - показываем кнопку старта
+      document.getElementById('startScreen').classList.add('active');
+    }
+  };
 </script>
 </body>
 </html>
