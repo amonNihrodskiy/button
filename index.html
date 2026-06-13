@@ -49,8 +49,8 @@
     border-radius: 24px;
     border: 1px solid #f0e0e6;
     padding: 3rem 2.5rem;
-    max-width: 460px;
-    width: calc(100% - 2rem);
+    width: 340px;
+    max-width: calc(100% - 2rem);
     text-align: center;
     box-shadow: 0 4px 32px rgba(201,99,122,0.07);
   }
@@ -124,7 +124,7 @@
     display: flex;
     gap: 12px;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .btn-yes {
@@ -203,16 +203,17 @@
 <div class="desktop-block card">
   <span class="heart-icon">📱</span>
   <p class="question">Открой эту страницу с телефона</p>
+  <p class="subtext">Здесь тебя ждёт что-то важное&nbsp;♡</p>
 </div>
 
 <div class="card" id="mainCard">
   <div class="initial" id="initial">
-    <span class="heart-icon">🌸</span>
-    <p class="question">Хочешь стать моей девушкой? ♡</p>
-    <p class="subtext">Мне очень важен твой ответ.</p>
+    <span class="heart-icon" id="mainHeart">🌸</span>
+    <p class="question" id="mainQuestion">Хочешь стать моей девушкой? ♡</p>
+    <p class="subtext" id="mainSubtext">Мне очень важен твой ответ.</p>
     <div class="btns">
       <button class="btn-yes" onclick="answer(true)">Да ♡</button>
-      <button class="btn-no" onclick="answer(false)">Нет</button>
+      <button class="btn-no" onclick="noClicked()">Нет</button>
     </div>
   </div>
 
@@ -263,12 +264,46 @@
     showResponse(yes);
   }
 
+  // Escalation stages for "No"
+  const noStages = [
+    {
+      question: 'Ты точно уверена? ♡',
+      subtext: 'Подумай ещё разок.'
+    },
+    {
+      question: 'Точно-точно уверена?',
+      subtext: 'Я просто хочу убедиться.'
+    },
+    {
+      question: 'Это последний раз.',
+      subtext: 'Теперь подумай хорошо и решай.'
+    }
+  ];
+
+  let noStep = 0;
+
+  function noClicked() {
+    if (noStep < noStages.length) {
+      const stage = noStages[noStep];
+      document.getElementById('mainQuestion').textContent = stage.question;
+      document.getElementById('mainSubtext').textContent  = stage.subtext;
+      noStep++;
+    } else {
+      answer(false);
+    }
+  }
+
   // Restore previous answer on load
   const saved = localStorage.getItem('proposalAnswer');
   if (saved === 'yes') {
     showResponse(true);
   } else if (saved === 'no') {
     showResponse(false);
+  }
+
+  // Reset for testing: open the page with ?reset at the end of the URL
+  if (window.location.search.includes('reset')) {
+    localStorage.removeItem('proposalAnswer');
   }
 </script>
 </body>
