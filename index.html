@@ -1,786 +1,275 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Любвеграм 💌</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #fdf4f9;
-      --surface: #ffffff;
-      --surface-2: #fce7f3;
-      --border: rgba(236, 72, 153, 0.15);
-      --text: #1a0a12;
-      --hint: #9d7b8a;
-      --accent: #ec4899;
-      --danger: #dc2626;
-      --danger-bg: #fee2e2;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      min-height: 100vh;
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      background-image:
-        radial-gradient(circle at 20% 10%, rgba(251,207,232,0.6) 0%, transparent 45%),
-        radial-gradient(circle at 80% 90%, rgba(253,230,244,0.5) 0%, transparent 40%);
-      color: var(--text);
-      display: flex; align-items: center; justify-content: center; padding: 16px;
-    }
-    .petal {
-      position: fixed; pointer-events: none; font-size: 18px;
-      animation: floatDown linear infinite; opacity: 0; z-index: 0;
-    }
-    @keyframes floatDown {
-      0%   { transform: translateY(-40px) rotate(0deg); opacity: 0; }
-      10%  { opacity: 0.55; } 90% { opacity: 0.3; }
-      100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
-    }
-    .desktop-block {
-      position: fixed; inset: 0; background: var(--bg); color: var(--text);
-      display: none; align-items: center; justify-content: center;
-      text-align: center; padding: 32px; z-index: 20; flex-direction: column; gap: 16px;
-    }
-    .desktop-block span { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; }
-    .desktop-block p { font-size: 16px; color: var(--hint); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Важный вопрос</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .phone-app {
-      width: 100%; max-width: 420px; height: min(94vh, 860px);
-      border-radius: 30px; background: var(--surface); border: 1px solid var(--border);
-      box-shadow: 0 32px 80px rgba(236,72,153,0.18), 0 0 0 1px rgba(255,255,255,0.9) inset;
-      overflow: hidden; display: flex; flex-direction: column; position: relative; z-index: 1;
-    }
+  html, body {
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+    background: #fdf8f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
 
-    /* Header */
-    .messenger-header {
-      padding: 14px 16px; background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 11px;
-    }
-    .avatar {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: linear-gradient(135deg, #fbcfe8, #f9a8d4);
-      display: grid; place-items: center; font-size: 20px;
-      box-shadow: 0 2px 8px rgba(236,72,153,0.25); flex-shrink: 0;
-    }
-    .chat-title { font-size: 15px; font-weight: 600; }
-    .chat-sub { font-size: 11.5px; color: var(--hint); margin-top: 1px; }
-    .trash-btn {
-      border: none; background: transparent; cursor: pointer; padding: 6px;
-      border-radius: 50%; color: var(--hint); display: grid; place-items: center;
-      transition: color 0.2s, background 0.2s; flex-shrink: 0;
-    }
-    .trash-btn:hover { color: var(--danger); background: var(--danger-bg); }
-    .trash-btn svg { width: 20px; height: 20px; }
+  .petals {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
 
-    /* Chat */
-    .chat-body {
-      flex: 1; padding: 14px 14px 0; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 8px; scrollbar-width: none;
-    }
-    .chat-body::-webkit-scrollbar { display: none; }
+  .petal {
+    position: absolute;
+    width: 9px;
+    height: 15px;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    opacity: 0;
+    animation: fall linear infinite;
+  }
 
-    .bubble {
-      max-width: 88%; padding: 10px 14px; border-radius: 18px;
-      line-height: 1.45; font-size: 14px; word-break: break-word;
-      animation: bubbleIn 0.22s ease;
-    }
-    @keyframes bubbleIn {
-      from { opacity: 0; transform: translateY(6px) scale(0.96); }
-      to   { opacity: 1; transform: none; }
-    }
-    .bubble.system {
-      background: var(--surface-2); align-self: flex-start; border-top-left-radius: 6px;
-    }
-    .bubble.user {
-      background: linear-gradient(135deg, #fbcfe8, #f472b6);
-      color: #4a0023; align-self: flex-end; border-top-right-radius: 6px; font-weight: 500;
-    }
+  @keyframes fall {
+    0%   { transform: translateY(-30px) rotate(0deg); opacity: 0; }
+    8%   { opacity: 0.55; }
+    92%  { opacity: 0.35; }
+    100% { transform: translateY(110vh) rotate(400deg); opacity: 0; }
+  }
 
-    /* Card bubble */
-.card-bubble {
-  align-self: flex-start;
-  max-width: 88%;
-  cursor: pointer;
-  animation: bubbleIn 0.3s ease;
-  border-radius: 18px;
-  border-top-left-radius: 6px;
+  .card {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    border-radius: 24px;
+    border: 1px solid #f0e0e6;
+    padding: 3rem 2.5rem;
+    max-width: 460px;
+    width: calc(100% - 2rem);
+    text-align: center;
+    box-shadow: 0 4px 32px rgba(201,99,122,0.07);
+  }
 
-  /* ВАЖНО */
-  overflow: visible;
+  .desktop-block {
+    display: none;
+  }
 
-  box-shadow: 0 6px 24px rgba(0,0,0,0.13);
-  position: relative;
-}
-    .card-div {
-      padding: 22px 20px 20px; border-radius: 18px;
-      display: flex; flex-direction: column; align-items: center;
-      text-align: center; gap: 5px; position: relative; overflow: hidden;
-      min-width: 200px;
-    }
-    .card-div::before {
-      content: ''; position: absolute; top: -30px; right: -30px;
-      width: 110px; height: 110px; border-radius: 50%; background: rgba(255,255,255,0.18);
-    }
-    .card-div::after {
-      content: ''; position: absolute; bottom: -20px; left: -20px;
-      width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.13);
-    }
-    .card-div .c-title { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; opacity: 0.6; }
-    .card-div .c-emoji { font-size: 40px; line-height: 1; margin: 5px 0 3px; }
-    .card-div .c-text  { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; line-height: 1.25; }
-    .card-div .c-sub   { font-size: 11.5px; line-height: 1.5; opacity: 0.72; white-space: pre-line; margin-top: 2px; }
-    .card-div .c-dots  { margin-top: 8px; opacity: 0.35; font-size: 10px; letter-spacing: 5px; }
-    .card-bubble .tap-hint {
-      position: absolute; bottom: 7px; right: 9px;
-      font-size: 9px; color: rgba(255,255,255,0.85);
-      background: rgba(0,0,0,0.2); border-radius: 8px; padding: 2px 6px; pointer-events: none;
-    }
+  @media (min-width: 700px) {
+    #mainCard { display: none; }
+    .desktop-block { display: block; }
+  }
 
-    /* Phrase card */
-    .phrase-card {
-      margin: 10px 14px 6px; padding: 18px 16px 16px; border-radius: 20px;
-      background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 100%);
-      border: 1.5px solid rgba(236,72,153,0.25); text-align: center;
-      position: relative; overflow: hidden;
-    }
-    .phrase-card::before {
-      content: ''; position: absolute; top: -30px; right: -30px;
-      width: 100px; height: 100px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(251,207,232,0.6) 0%, transparent 70%);
-    }
-    .phrase-label {
-      font-size: 11px; font-weight: 600; letter-spacing: 1.4px;
-      text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
-    }
-    .phrase-text {
-      font-family: 'Playfair Display', serif; font-size: 22px;
-      font-weight: 700; color: #831843; line-height: 1.3; position: relative; z-index: 1;
-    }
+  .desktop-block .heart-icon {
+    font-size: 52px;
+    display: block;
+    margin-bottom: 1.4rem;
+  }
 
-    /* Progress */
-    .progress-area { padding: 6px 14px 8px; }
-    .progress-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-    .progress-label { font-size: 11.5px; color: var(--hint); font-weight: 500; }
-    .progress-count { font-size: 12px; font-weight: 600; color: var(--accent); }
-    .progress-track { height: 7px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
-    .progress-fill {
-      height: 100%; border-radius: 99px;
-      background: linear-gradient(90deg, #f9a8d4, #ec4899);
-      transition: width 0.5s cubic-bezier(.34,1.56,.64,1);
-      box-shadow: 0 0 6px rgba(236,72,153,0.4);
-    }
+  .desktop-block .question {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 28px;
+    font-weight: 300;
+    font-style: italic;
+    color: #2c1a22;
+    line-height: 1.45;
+    margin-bottom: 0.5rem;
+  }
 
-    /* Composer */
-    .composer {
-      padding: 10px 10px 12px; border-top: 1px solid var(--border);
-      background: rgba(255,255,255,0.96); display: flex; gap: 8px; align-items: center;
-    }
-    .composer input {
-      flex: 1; border: 1.5px solid var(--border); outline: none;
-      border-radius: 22px; padding: 11px 15px; font-size: 14.5px;
-      font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--bg);
-      transition: border-color 0.2s;
-    }
-    .composer input::placeholder { color: var(--hint); }
-    .composer input:focus { border-color: rgba(236,72,153,0.5); }
-    .send-btn {
-      border: none; border-radius: 50%; width: 44px; height: 44px; flex-shrink: 0;
-      background: linear-gradient(135deg, #f472b6, #ec4899); color: #fff;
-      display: grid; place-items: center; cursor: pointer;
-      box-shadow: 0 4px 14px rgba(236,72,153,0.4); transition: transform 0.15s;
-    }
-    .send-btn:active { transform: scale(0.92); }
-    .send-btn svg { width: 20px; height: 20px; transform: translate(-1px, 1px); }
+  .desktop-block .subtext {
+    font-size: 13px;
+    font-weight: 300;
+    color: #b8909a;
+    letter-spacing: 0.04em;
+  }
 
-    .status { font-size: 12px; color: var(--hint); text-align: center; padding: 0 10px 6px; min-height: 18px; }
-    .status.error { color: var(--danger); }
+  .heart-icon {
+    font-size: 52px;
+    display: block;
+    margin-bottom: 1.4rem;
+    animation: heartbeat 2.2s ease-in-out infinite;
+  }
 
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes heartbeat {
+    0%,100% { transform: scale(1); }
+    14%     { transform: scale(1.16); }
+    28%     { transform: scale(1); }
+    42%     { transform: scale(1.09); }
+    70%     { transform: scale(1); }
+  }
 
-    /* Lightbox */
-    .lightbox {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.88);
-      display: none; align-items: center; justify-content: center;
-      z-index: 100; padding: 20px; animation: fadeIn 0.2s ease;
-    }
-    .lightbox.show { display: flex; }
-    .lightbox-inner {
-      animation: popIn 0.25s cubic-bezier(.34,1.56,.64,1);
-      border-radius: 24px; overflow: hidden;
-      box-shadow: 0 20px 80px rgba(0,0,0,0.5);
-    }
-    .lightbox-inner .card-div {
-      min-width: 260px; max-width: min(90vw, 340px);
-      padding: 36px 30px 30px;
-    }
-    .lightbox-inner .c-emoji { font-size: 56px !important; }
-    .lightbox-inner .c-text  { font-size: 26px !important; }
-    .lightbox-inner .c-sub   { font-size: 15px !important; }
-    @keyframes popIn {
-      from { transform: scale(0.85); opacity: 0; }
-      to   { transform: scale(1); opacity: 1; }
-    }
-    .lightbox-close {
-      position: absolute; top: 20px; right: 20px;
-      background: rgba(255,255,255,0.15); border: none; color: #fff;
-      border-radius: 50%; width: 40px; height: 40px; font-size: 18px;
-      cursor: pointer; display: grid; place-items: center; backdrop-filter: blur(4px);
-    }
+  .question {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 30px;
+    font-weight: 300;
+    font-style: italic;
+    color: #2c1a22;
+    line-height: 1.45;
+    margin-bottom: 0.55rem;
+  }
 
-    @media (min-width: 900px), (pointer: fine) {
-      .phone-app { display: none; }
-      .desktop-block { display: flex; }
-    }
-  </style>
+  .subtext {
+    font-size: 12.5px;
+    font-weight: 300;
+    color: #b8909a;
+    letter-spacing: 0.04em;
+    margin-bottom: 2.4rem;
+  }
+
+  .btns {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-yes {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    padding: 12px 38px;
+    border-radius: 999px;
+    border: none;
+    background: #c9637a;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+  }
+  .btn-yes:hover { background: #b5506a; transform: scale(1.04); }
+
+  .btn-no {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    padding: 12px 38px;
+    border-radius: 999px;
+    border: 1.5px solid #e8c8cf;
+    background: transparent;
+    color: #a07080;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s, border-color 0.15s;
+  }
+  .btn-no:hover { background: #fdf5f6; border-color: #c9a0aa; transform: scale(1.04); }
+
+  .initial, .response { transition: opacity 0.35s; }
+  .response { display: none; }
+
+  .resp-emoji {
+    font-size: 54px;
+    display: block;
+    margin-bottom: 1rem;
+    animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.3); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  .resp-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 300;
+    font-style: italic;
+    color: #2c1a22;
+    margin-bottom: 0.6rem;
+    animation: fadeUp 0.5s 0.1s both;
+  }
+
+  .resp-body {
+    font-size: 13.5px;
+    font-weight: 300;
+    color: #8a6070;
+    line-height: 1.8;
+    animation: fadeUp 0.5s 0.2s both;
+  }
+
+  @keyframes fadeUp {
+    from { transform: translateY(14px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+</style>
 </head>
 <body>
 
-  <div class="petal" style="left:7%;animation-duration:9s;animation-delay:0s">🌸</div>
-  <div class="petal" style="left:22%;animation-duration:12s;animation-delay:3s">🌷</div>
-  <div class="petal" style="left:45%;animation-duration:8s;animation-delay:1.5s">💮</div>
-  <div class="petal" style="left:68%;animation-duration:11s;animation-delay:5s">🌸</div>
-  <div class="petal" style="left:85%;animation-duration:10s;animation-delay:2s">🌺</div>
-  <div class="petal" style="left:55%;animation-duration:13s;animation-delay:7s">🌷</div>
+<div class="petals" id="petals"></div>
 
-  <div class="desktop-block">
-    <span>💌</span>
-    <span>Это открытка только для телефона.</span>
-    <p>Зайди с мобильного устройства, там кое-что интересное ✨</p>
-  </div>
+<div class="desktop-block card">
+  <span class="heart-icon">📱</span>
+  <p class="question">Открой эту страницу с телефона</p>
+</div>
 
-  <main class="phone-app">
-    <header class="messenger-header">
-      <div class="avatar">💖</div>
-      <div style="flex:1">
-        <div class="chat-title">Колумб 💖</div>
-        <div class="chat-sub">Для тебя всегда в сети</div>
-      </div>
-      <button class="trash-btn" id="trashBtn" aria-label="Очистить историю">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-          <path d="M10 11v6"></path><path d="M14 11v6"></path>
-          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-        </svg>
-      </button>
-    </header>
-
-    <section class="chat-body" id="chatBody">
-      <div class="bubble system">Привет, солнышко💖</div>
-    </section>
-
-    <section class="phrase-card">
-      <div class="phrase-label">✦ Напиши это ✦</div>
-      <div class="phrase-text" id="targetPhrase">Я самая лучшая</div>
-    </section>
-
-    <div class="progress-area">
-      <div class="progress-meta">
-        <span class="progress-label">Прогресс</span>
-        <span class="progress-count" id="progressCount">0 / 10</span>
-      </div>
-      <div class="progress-track">
-        <div class="progress-fill" id="progressFill" style="width:0%"></div>
-      </div>
+<div class="card" id="mainCard">
+  <div class="initial" id="initial">
+    <span class="heart-icon">🌸</span>
+    <p class="question">Хочешь стать моей девушкой? ♡</p>
+    <p class="subtext">Мне очень важен твой ответ.</p>
+    <div class="btns">
+      <button class="btn-yes" onclick="answer(true)">Да ♡</button>
+      <button class="btn-no" onclick="answer(false)">Нет</button>
     </div>
-
-    <form class="composer" id="composerForm" autocomplete="off">
-      <input id="messageInput" type="text" placeholder="Напиши фразу в точности…" />
-      <button type="submit" class="send-btn" aria-label="Отправить">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"></line>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-        </svg>
-      </button>
-    </form>
-    <div class="status" id="statusText"></div>
-
-
-  </main>
-
-  <div class="lightbox" id="lightbox">
-    <button class="lightbox-close" id="lightboxClose">✕</button>
-    <div class="lightbox-inner"></div>
   </div>
 
-  <script>
-    const STORAGE_KEY = 'postcard';
-    const TOTAL = 10;
+  <div class="response" id="resp">
+    <span class="resp-emoji" id="respEmoji"></span>
+    <div class="resp-title" id="respTitle"></div>
+    <div class="resp-body"  id="respBody"></div>
+  </div>
+</div>
 
-    // ── 20 тематических карточек ─────────────────────────
-    const CARDS = [
-{
-  title: "Карточка спокойствия",
-  emoji: "🌊",
-  bg: ["#e0f2fe", "#bae6fd", "#93c5fd"],
-  accent: "#0c4a6e",
-  text: "Пусть станет спокойно.",
-  sub: "Сейчас можно ничего не решать.\nТревоги могут уйти сами, медленно и тихо.\nОстанься здесь, в этом спокойствии.\nТы в порядке."
-},
-      {
-        title: "Карточка красоты",
-        emoji: "🌹",
-        bg: ["#ffe4e6", "#fecdd3", "#fda4af"],
-        accent: "#9f1239",
-        text: "Ты красивая.",
-        sub: "Не «ничего», не «так себе».\nПо-настоящему красивая.\nЯ вижу это каждый раз."
-      },
-      {
-        title: "Карточка голоса",
-        emoji: "🎵",
-        bg: ["#f3e8ff", "#e9d5ff", "#d8b4fe"],
-        accent: "#581c87",
-        text: "Твой голос.",
-        sub: "Я могу слушать тебя бесконечно.\nОн такой твой.\nНи с чем не перепутаю."
-      },
-      {
-        title: "Карточка силы",
-        emoji: "⚡",
-        bg: ["#fef9c3", "#fef08a", "#fde047"],
-        accent: "#713f12",
-        text: "Ты справишься.",
-        sub: "С этим. И с тем что дальше.\nТы уже справлялась.\nЯ в тебя верю."
-      },
-      {
-        title: "Карточка утра",
-        emoji: "☀️",
-        bg: ["#fff7ed", "#fed7aa", "#fdba74"],
-        accent: "#7c2d12",
-        text: "Доброе утро.",
-        sub: "Этот день принесёт\nчто-то хорошее.\nОн начинается с тебя."
-      },
-      {
-        title: "Карточка на ночь",
-        emoji: "🌙",
-        bg: ["#1e1b4b", "#312e81", "#3730a3"],
-        accent: "#c7d2fe",
-        text: "Спокойной ночи.",
-        sub: "Отпусти всё лишнее.\nЗавтра — новый день.\nТы сделала достаточно."
-      },
-      {
-        title: "Карточка смеха",
-        emoji: "😄",
-        bg: ["#ecfccb", "#d9f99d", "#bef264"],
-        accent: "#365314",
-        text: "Время мыть руки!",
-        sub: "Люблю тебя даже за это.\nЛюблю твой смех.\nИ всё наше дурацкое."
-      },
-      {
-        title: "Карточка объятия",
-        emoji: "🫂",
-        bg: ["#fdf4ff", "#f5d0fe", "#e879f9"],
-        accent: "#581c87",
-        text: "Иди сюда.",
-        sub: "Просто хочу обнять.\nНичего не нужно говорить.\nПросто побудем рядом."
-      },
-      {
-        title: "Я думаю о тебе",
-        emoji: "💭",
-        bg: ["#f0fdf4", "#bbf7d0", "#86efac"],
-        accent: "#14532d",
-        text: "Я думаю о тебе.",
-        sub: "Просто так. Без причины.\nТы занимаешь много места\nв моих мыслях."
-      },
-      {
-        title: "Карточка «отпусти»",
-        emoji: "🍃",
-        bg: ["#f0fdfa", "#99f6e4", "#5eead4"],
-        accent: "#134e4a",
-        text: "Отпусти.",
-        sub: "Не всё от тебя зависит.\nИ это нормально.\nТы не обязана держать всё."
-      },
-      {
-        title: "Карточка гордости",
-        emoji: "🏆",
-        bg: ["#fffbeb", "#fde68a", "#fcd34d"],
-        accent: "#78350f",
-        text: "Я горжусь тобой.",
-        sub: "Не за что-то конкретное.\nПросто за то, что ты — ты.\nКаждый день."
-      },
-      {
-        title: "Карточка любви",
-        emoji: "💗",
-        bg: ["#fff1f2", "#ffe4e6", "#fecdd3"],
-        accent: "#881337",
-        text: "Я тебя люблю.",
-        sub: "Очень. Сильно.\nТак, что иногда не знаю\nкуда это деть."
-      },
-      {
-        title: "Карточка особенности",
-        emoji: "🦋",
-        bg: ["#eff6ff", "#bfdbfe", "#93c5fd"],
-        accent: "#1e3a8a",
-        text: "Ты особенная.",
-        sub: "Таких как ты — нет.\nВот буквально.\nНигде больше."
-      },
-      {
-        title: "Карточка тепла",
-        emoji: "🕯️",
-        bg: ["#fef3c7", "#fde68a", "#fbbf24"],
-        accent: "#78350f",
-        text: "Ты согреваешь.",
-        sub: "Людей вокруг.\nМеня — особенно.\nПросто своим присутствием."
-      },
-      {
-        title: "Карточка нежности",
-        emoji: "🌸",
-        bg: ["#fdf2f8", "#fbcfe8", "#f9a8d4"],
-        accent: "#831843",
-        text: "Ты нежная.",
-        sub: "Даже когда думаешь что грубишь.\nЯ всё равно чувствую тепло.\nВсегда."
-      },
-      {
-        title: "Карточка доверия",
-        emoji: "🔐",
-        bg: ["#f8fafc", "#e2e8f0", "#cbd5e1"],
-        accent: "#0f172a",
-        text: "Я доверяю тебе.",
-        sub: "Полностью и без условий.\nТы — человек, которому\nможно довериться."
-      },
-      {
-        title: "Карточка мечты",
-        emoji: "✨",
-        bg: ["#faf5ff", "#ede9fe", "#ddd6fe"],
-        accent: "#4c1d95",
-        text: "Мечтай смелее.",
-        sub: "Ты заслуживаешь всего\nо чём мечтаешь.\nДаже если страшно верить."
-      },
-      {
-        title: "Карточка смелости",
-        emoji: "🦁",
-        bg: ["#fff7ed", "#ffedd5", "#fed7aa"],
-        accent: "#7c2d12",
-        text: "Ты смелее чем думаешь.",
-        sub: "Каждый день ты делаешь\nчто-то непростое.\nЭто и есть смелость."
-      },
-      {
-        title: "Карточка «просто так»",
-        emoji: "💌",
-        bg: ["#fdf4f9", "#fce7f3", "#fbcfe8"],
-        accent: "#9d174d",
-        text: "Просто так.",
-        sub: "Нет повода.\nПросто хочу чтобы ты знала:\nты очень важна для меня."
-      },
-      {
-        title: "Карточка навсегда",
-        emoji: "♾️",
-        bg: ["#f0f9ff", "#e0f2fe", "#bae6fd"],
-        accent: "#0c4a6e",
-        text: "Я никуда не денусь.",
-        sub: "Что бы ни было.\nЯ здесь.\nВсегда."
-      },
-    ];
+<script>
+  const FORM_BASE = 'https://docs.google.com/forms/d/e/1FAIpQLSfAtkwpmsN4MY7pskxvB9iyoHhzsXUJYDtJtdFMMMKihyGSYQ/formResponse';
+  const ENTRY    = 'entry.256520734';
 
-    // ── Фразы ────────────────────────────────────────────
-const allPairs = [
-  ["Я самая лучшая", "Да, солнышко, именно так 🌟"],
-  ["Я самая красивая", "Ещё какая красивая, я каждый раз теряюсь 😍"],
-  ["Я заслуживаю любви", "Заслуживаешь, и я тебя очень люблю 💗"],
-  ["Я особенная и любимая", "Ты самая особенная, это правда ✨"],
-  ["Меня очень сильно любят", "Очень-очень сильно. Больше, чем ты думаешь 🥰"],
-  ["Я сильная и смелая", "Ты справляешься со всем, я вижу это 💪🏻"],
-  ["Я умная и талантливая", "Точно. Я каждый раз восхищаюсь тобой 🤩"],
-  ["Я заслуживаю счастья", "Ещё как заслуживаешь. И я хочу быть частью этого счастья 💛"],
-  ["Я верю в себя", "Я тоже верю в тебя. Всегда 🙌"],
-  ["Я притягиваю хорошее", "К тебе тянется всё самое лучшее — включая меня 😊"],
-  ["Я дарю и получаю любовь", "Ты умеешь любить. Это редкий дар ❤️"],
-  ["Я со всем справлюсь", "Справишься, я в тебя верю 🤍"],
-  ["Меня любят такой, какая я есть", "Именно такой. Менять ничего не нужно 💝"],
-  ["Я лучшее, что есть в этом мире", "Абсолютно точно. Ты — моё лучшее 🌍"],
-  ["Я полна сил и радости", "Вижу это в твоих глазах. Это заразительно ☀️"],
-  ["Я горжусь собой", "И я горжусь тобой, каждый день 🥹"],
-  ["Я открыта для счастья", "Тогда держи: я тебя очень люблю 💌"],
-  ["Я никогда не сдаюсь", "И правильно. У тебя слишком сильный характер 🤍"],
-  ["Я всегда иду вперёд", "И очень красиво это делаешь 🚶‍♀️✨"],
-  ["Я справлюсь с трудностями", "Ты всегда находишь выход, даже когда сложно 💪"],
-  ["Я заслуживаю уважения", "И ты его получаешь, просто будь собой 🤝"],
-  ["Я важна", "Ты очень важна. Больше, чем ты думаешь 💙"],
-  ["Я не одна", "Ты никогда не одна. Я рядом 🫶"],
-  ["Я могу ошибаться и это нормально", "Ошибки — это часть твоей силы 🌱"],
-  ["Я учусь и расту", "И растёшь ты невероятно быстро 📈"],
-  ["Я спокойна", "Мне нравится это твоё состояние 🌊"],
-  ["Я отпускаю лишнее", "И становишься легче с каждым разом 🍃"],
-  ["Я выбираю себя", "И это самое правильное решение 💎"],
-  ["Я заслуживаю заботы", "И ты её получаешь. По праву 🤍"],
-  ["Я заслуживаю отдыха", "Остановись, ты уже достаточно сделала 🌙"],
-  ["Я люблю себя", "И я тоже люблю тебя. Очень 💗"],
-  ["Я становлюсь лучше каждый день", "Это видно даже без слов 🌟"],
-  ["Я контролирую свою жизнь", "Ты уверенно держишь руль своей жизни 🚗"],
-  ["Я могу всё, что захочу", "И у тебя уже многое получается 🔥"],
-  ["Я не боюсь будущего", "Потому что ты его создаёшь сама 🌅"],
-  ["Я ценна", "Ты невероятно ценна 💎"],
-  ["Я выбираю счастье", "И оно уже идёт к тебе ☀️"],
-  ["Я принимаю себя", "И в этом твоя настоящая сила 🤍"],
-  ["Я уникальна", "И повторить тебя невозможно ✨"],
-  ["Я живу своей жизнью", "И она у тебя очень настоящая 🌿"],
-  ["Я могу просить помощи", "И ты всегда её заслуживаешь 🫶"],
-  ["Я не обязана быть идеальной", "Ты прекрасна уже сейчас 💫"],
-  ["Я развиваюсь", "И это видно в каждом твоём шаге 📚"],
-  ["Я могу начать заново", "И у тебя это отлично получается 🔁"],
-  ["Я имею право на чувства", "И они у тебя важны 💙"],
-  ["Я достойна тепла", "И ты его получаешь 🧸"],
-  ["Я в безопасности", "Ты сейчас в спокойствии 🌊"],
-  ["Я люблю свою жизнь", "И она отвечает тебе взаимностью 🌸"],
-  ["Я не сдаюсь перед страхами", "И они становятся слабее 💪"],
-  ["Я могу больше, чем думаю", "И это уже правда 🔥"],
-  ["Я не обязана нравиться всем", "И правильно. Твоя жизнь — не для одобрения других 🌿"],
-  ["Я выбираю своё спокойствие", "И оно становится твоей силой 🌊"],
-  ["Я могу остановиться и передохнуть", "Ты не обязана всё тащить без пауз 🌙"],
-  ["Я имею право менять своё мнение", "Это не слабость, а гибкость мышления 🔁"],
-  ["Я могу быть разной каждый день", "И в этом нет противоречия — только жизнь 🌈"],
-  ["Я имею право на личные границы", "И их уважение — это норма 🤝"],
-  ["Я могу говорить «нет» без вины", "И это делает тебя честнее с собой 🚪"],
-  ["Я могу идти своим темпом", "И твой темп — правильный для тебя 🚶‍♀️"],
-  ["Я не обязана объяснять себя всем", "Некоторые вещи просто твои 🌙"],
-  ["Я не обязана быть удобной", "Тебя можно принимать настоящей, а не удобной 🧩"],
-  ["Я могу быть уставшей", "И даже в этом ты остаёшься достаточной 🫶"],
-  ["Я могу позволить себе отдохнуть", "И в паузе тоже происходит жизнь 🌿"],
-  ["Я могу начинать с нуля без стыда", "Каждый новый старт — это сила 🔄"],
-  ["Я не обязана заслуживать право на отдых", "Отдых — базовая потребность 🌙"],
-  ["Я могу не знать ответ прямо сейчас", "И это нормально — ясность приходит позже 💭"],
-  ["Я имею право чувствовать всё", "Эмоции не делают тебя слабее 🌊"],
-  ["Я могу проживать сложные периоды", "И они не определяют всю твою жизнь ⛰️"],
-  ["Я не обязана быть сильной постоянно", "Сила — не в постоянстве, а в живости 💪"],
-  ["Я могу принимать поддержку", "И в этом нет зависимости, только человечность 🤍"],
-  ["Я имею право на внутренний покой", "И он не нужно заслуживать 🌊"],
-  ["Я могу не торопиться", "Жизнь не уходит, пока ты дышишь 🌬️"],
-  ["Я могу доверять своему пути", "Даже если он не прямой 🌙"],
-  ["Я не обязана всё понимать заранее", "Понимание приходит в процессе 📍"],
-  ["Я имею право на свои желания", "Они важны сами по себе 💛"],
-  ["Я не обязана спешить за чужими ожиданиями", "Твой ритм важнее чужих сценариев 🚶‍♀️"],
-  ["Я могу выбирать то, что делает мне хорошо", "И это уже достаточное основание 🌸"],
-];
-    const allPhrases = allPairs.map(p => p[0]);
-    const replyMap   = Object.fromEntries(allPairs);
+  function sendAnswer(value) {
+    const url = `${FORM_BASE}?${ENTRY}=${encodeURIComponent(value)}&submit=Submit`;
+    fetch(url, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+  }
 
-    // ── Карточка (HTML div, инлайн стили) ────────────────
-function makeCardDiv(card) {
-  const d = document.createElement('div');
-  d.className = 'card-div';
+  const colors = ['#f4b8c8','#f9d0da','#e8a0b4','#fce4ec','#f48fb1','#fdd5de'];
+  const petals = document.getElementById('petals');
+  for (let i = 0; i < 22; i++) {
+    const p = document.createElement('div');
+    p.className = 'petal';
+    p.style.cssText = `left:${Math.random()*100}%;top:${-Math.random()*15}px;background:${colors[i%colors.length]};animation-duration:${4+Math.random()*5}s;animation-delay:${Math.random()*7}s;transform:rotate(${Math.random()*360}deg)`;
+    petals.appendChild(p);
+  }
 
-  d.style.cssText = `
-    background: linear-gradient(135deg, ${card.bg[0]}, ${card.bg[1]} 55%, ${card.bg[2]});
-    color: ${card.accent};
-    border: 1.5px solid ${card.accent};
-    padding: 22px 20px 20px;
-    border-radius: 18px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 6px;
-    min-width: 180px;
-    box-sizing: border-box;
-  `;
+  function showResponse(yes) {
+    document.getElementById('initial').style.display = 'none';
+    const resp = document.getElementById('resp');
+    resp.style.display = 'block';
 
-  const title = document.createElement('div');
-  title.className = 'c-title';
-  title.textContent = card.title;
-
-  const emoji = document.createElement('div');
-  emoji.className = 'c-emoji';
-  emoji.textContent = card.emoji;
-
-  const text = document.createElement('div');
-  text.className = 'c-text';
-  text.textContent = card.text;
-
-  const sub = document.createElement('div');
-  sub.className = 'c-sub';
-  sub.textContent = card.sub;
-
-  const dots = document.createElement('div');
-  dots.className = 'c-dots';
-  dots.textContent = '• • •';
-
-  d.appendChild(title);
-  d.appendChild(emoji);
-  d.appendChild(text);
-  d.appendChild(sub);
-  d.appendChild(dots);
-
-  return d;
-}
-
-    function addCardBubble(card, animate = true) {
-      const wrap = document.createElement('div');
-      wrap.className = 'card-bubble';
-      if (!animate) wrap.style.animation = 'none';
-      const cardEl = makeCardDiv(card);
-cardEl.style.width = '100%';
-wrap.appendChild(cardEl);
-      const hint = document.createElement('div');
-      hint.className = 'tap-hint'; hint.textContent = 'нажми чтобы открыть';
-      wrap.appendChild(hint);
-      wrap.addEventListener('click', () => openLightbox(card));
-      chatBody.appendChild(wrap);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          chatBody.scrollTop = chatBody.scrollHeight;
-        });
-      });
+    if (yes) {
+      document.getElementById('respEmoji').textContent  = '🌷';
+      document.getElementById('respTitle').textContent  = 'Ты сделала меня счастливым';
+      document.getElementById('respBody').innerHTML     = 'Теперь всё официально.<br>Я очень рад, что ты рядом.&nbsp;♡';
+    } else {
+      document.getElementById('respEmoji').textContent  = '🥺';
+      document.getElementById('respTitle').textContent  = 'Ну ладно...';
+      document.getElementById('respBody').innerHTML     = 'Я буду ждать, сколько потребуется.<br>Ты того стоишь.';
     }
+  }
 
-    // ── Лайтбокс ──────────────────────────────────────────
-    const lightbox      = document.getElementById('lightbox');
-    const lightboxClose = document.getElementById('lightboxClose');
+  function answer(yes) {
+    sendAnswer(yes ? 'да' : 'нет');
+    localStorage.setItem('proposalAnswer', yes ? 'yes' : 'no');
+    showResponse(yes);
+  }
 
-    function openLightbox(card) {
-      const inner = lightbox.querySelector('.lightbox-inner');
-      inner.innerHTML = '';
-      const d = makeCardDiv(card);
-      d.style.padding = '36px 30px 30px';
-      d.style.minWidth = '260px';
-      d.style.maxWidth = 'min(90vw, 340px)';
-      // увеличим шрифты для лайтбокса
-      d.children[1].style.fontSize = '56px'; // emoji
-      d.children[2].style.fontSize = '26px'; // text
-      d.children[3].style.fontSize = '15px'; // sub
-      inner.appendChild(d);
-      lightbox.classList.add('show');
-    }
-    lightboxClose.addEventListener('click', () => lightbox.classList.remove('show'));
-    lightbox.addEventListener('click', e => { if (e.target === lightbox) lightbox.classList.remove('show'); });
-
-    // ── State ─────────────────────────────────────────────
-    function loadState() {
-      try { const r = localStorage.getItem(STORAGE_KEY); if (r) return JSON.parse(r); } catch(_) {}
-      return { circles: 0, queue: [], history: [], usedCards: [] };
-    }
-    function saveState(s) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch(_) {} }
-    function shuffle(a) {
-      const b = [...a];
-      for (let i=b.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; }
-      return b;
-    }
-    function buildQueue() { return shuffle(allPhrases).slice(0, TOTAL); }
-    function getNextCardIdx(s) {
-      if (!s.usedCards) s.usedCards = [];
-      const idx = s.usedCards.length % CARDS.length;
-      s.usedCards.push(idx);
-      return idx;
-    }
-
-    // ── DOM ───────────────────────────────────────────────
-    const chatBody      = document.getElementById('chatBody');
-    const targetPhrase  = document.getElementById('targetPhrase');
-    const composerForm  = document.getElementById('composerForm');
-    const messageInput  = document.getElementById('messageInput');
-    const statusText    = document.getElementById('statusText');
-    const progressFill  = document.getElementById('progressFill');
-    const progressCount = document.getElementById('progressCount');
-    const trashBtn      = document.getElementById('trashBtn');
-
-    // ── Init ──────────────────────────────────────────────
-    let state = loadState();
-    if (!state.queue || state.queue.length === 0) {
-      state.queue = buildQueue();
-      saveState(state);
-    }
-
-    if (state.history && state.history.length) {
-      state.history.forEach(({ text, kind, cardIdx }) => {
-        if (kind === 'card') addCardBubble(CARDS[cardIdx], false);
-        else addBubble(text, kind, false);
-      });
-    }
-    updateUI();
-
-    // ── Helpers ───────────────────────────────────────────
-    function addBubble(text, kind, animate = true) {
-      const el = document.createElement('div');
-      el.className = `bubble ${kind}`;
-      if (!animate) el.style.animation = 'none';
-      el.textContent = text;
-      chatBody.appendChild(el);
-      chatBody.scrollTop = chatBody.scrollHeight;
-    }
-    function updateUI() {
-      const done = TOTAL - state.queue.length;
-      progressFill.style.width = (done / TOTAL * 100) + '%';
-      progressCount.textContent = `${done} / ${TOTAL}`;
-      if (state.queue.length > 0) {
-        targetPhrase.textContent = state.queue[0];
-      }
-      statusText.textContent = ''; statusText.className = 'status';
-    }
-
-    // ── Submit ────────────────────────────────────────────
-    composerForm.addEventListener('submit', e => {
-      e.preventDefault();
-      if (state.queue.length === 0) return;
-      const value    = messageInput.value.trim();
-      const expected = state.queue[0];
-      if (value !== expected) {
-        statusText.textContent = 'Нужно слово в слово, попробуй ещё ✍️';
-        statusText.className = 'status error'; return;
-      }
-      addBubble(value, 'user');
-      if (!state.history) state.history = [];
-      state.history.push({ text: value, kind: 'user' });
-      state.queue.shift();
-      messageInput.value = ''; statusText.textContent = ''; statusText.className = 'status';
-
-      const isComplete = state.queue.length === 0;
-      const reply = replyMap[value] || 'Да, именно так 💗';
-
-      const typing = document.createElement('div');
-      typing.className = 'bubble system'; typing.textContent = '···'; typing.style.opacity = '0.6';
-      chatBody.appendChild(typing); chatBody.scrollTop = chatBody.scrollHeight;
-
-      setTimeout(() => {
-        typing.remove();
-        addBubble(reply, 'system');
-        state.history.push({ text: reply, kind: 'system' });
-
-        if (isComplete) {
-          state.circles = (state.circles || 0) + 1;
-          setTimeout(() => {
-            const cardMsg = '🎁 Держи, это тебе:';
-            addBubble(cardMsg, 'system');
-            state.history.push({ text: cardMsg, kind: 'system' });
-            setTimeout(() => {
-const cardIdx = getNextCardIdx(state);
-
-console.log('ADDING CARD:', cardIdx, CARDS[cardIdx]);
-
-if (!CARDS[cardIdx]) {
-  console.error('Карточка не найдена');
-  return;
-}
-
-const card = CARDS[cardIdx];
-
-addCardBubble(card);
-
-// сохраняем СРАЗУ
-state.history.push({ kind: 'card', cardIdx });
-saveState(state);
-
-// только потом сброс
-state.queue = buildQueue();
-updateUI();
-			  
-            }, 600);
-          }, 800);
-        } else {
-          saveState(state); updateUI();
-        }
-      }, 950);
-    });
-
-    // ── Trash ─────────────────────────────────────────────
-    trashBtn.addEventListener('click', () => {
-      if (!confirm('Удалить всю историю и начать с нуля?')) return;
-      localStorage.removeItem(STORAGE_KEY);
-      state = { circles: 0, queue: buildQueue(), history: [], usedCards: [] };
-      saveState(state);
-      chatBody.innerHTML = '';
-      addBubble('Привет, солнышко 💖', 'system', false);
-      updateUI();
-    });
-  </script>
+  // Restore previous answer on load
+  const saved = localStorage.getItem('proposalAnswer');
+  if (saved === 'yes') {
+    showResponse(true);
+  } else if (saved === 'no') {
+    showResponse(false);
+  }
+</script>
 </body>
 </html>
