@@ -58,9 +58,9 @@ const SKINS = [
 
 const BACKGROUNDS = [
     { id: 'default', title: 'Рассвет', class: 'bg-default', price: 0, pCols: ['#ff5fa0', '#f093fb', '#a18cd1', '#4facfe', '#ffd700'] },
-    { id: 'night', title: 'Полночь', class: 'bg-night', price: 50, pCols: ['#3a47d5', '#00d2ff', '#6a11cb', '#2575fc', '#f9d423'] },
-    { id: 'sunset', title: 'Закат', class: 'bg-sunset', price: 150, pCols: ['#ee0979', '#ff6a00', '#f12711', '#833ab4', '#ffcc33'] },
-    { id: 'space', title: 'Космос', class: 'bg-space', price: 500, pCols: ['#7f00ff', '#e100ff', '#000046', '#1cb5e0', '#00f2fe'] }
+    { id: 'night', title: 'Полночь', class: 'bg-night', price: 500, pCols: ['#3a47d5', '#00d2ff', '#6a11cb', '#2575fc', '#f9d423'] },
+    { id: 'sunset', title: 'Закат', class: 'bg-sunset', price: 1500, pCols: ['#ee0979', '#ff6a00', '#f12711', '#833ab4', '#ffcc33'] },
+    { id: 'space', title: 'Космос', class: 'bg-space', price: 5000, pCols: ['#7f00ff', '#e100ff', '#000046', '#1cb5e0', '#00f2fe'] }
 ];
 
 const SAVE_VERSION = 'v3';
