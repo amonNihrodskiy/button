@@ -63,7 +63,7 @@ const BACKGROUNDS = [
     { id: 'space', title: 'Космос', class: 'bg-space', price: 5000, pCols: ['#7f00ff', '#e100ff', '#000046', '#1cb5e0', '#00f2fe'] }
 ];
 
-const SAVE_VERSION = 'v3';
+const SAVE_VERSION = 'v4';
 
 const version = localStorage.getItem('hj_save_version');
 
