@@ -60,12 +60,13 @@ body {
 }
 
 #menu-screen {
-    background-image: url('bg.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    /* !important нужен, чтобы перебить стандартный background: rgba(...) у класса .screen */
+    background: url('bg.png') no-repeat center center !important;
+    background-size: cover !important;
+    
+    /* Если хочешь, чтобы картинка не была размытой (убираем блюр) */
+    backdrop-filter: none !important; 
 }
-
 /* Зона магнита */
 #magnet-timer-zone {
     position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
