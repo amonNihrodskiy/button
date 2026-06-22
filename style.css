@@ -62,7 +62,7 @@ body {
     padding: 20px;
     
     /* ТВОЯ КАРТИНКА ТУТ */
-    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('bg.png') no-repeat center center !important;
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('image/bg.png') no-repeat center center !important;
     background-size: cover !important;
 }
 
