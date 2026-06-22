@@ -59,6 +59,13 @@ body {
     font-weight: 900; color: #ffd700; z-index: 10;
 }
 
+#menu-screen {
+    background-image: url('bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
 /* Зона магнита */
 #magnet-timer-zone {
     position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
