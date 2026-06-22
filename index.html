@@ -14,7 +14,7 @@
 </div>
 
 <div id="game-wrapper">
-    <!-- Декорации фона -->
+    <!-- Декорации игрового фона -->
     <div class="bg-decor sun-glow"></div>
     <div class="bg-decor cloud-1"></div>
     <div class="bg-decor cloud-2"></div>
@@ -32,7 +32,7 @@
         💰 <span id="coin-val">0</span>
     </div>
 
-    <!-- Таймер магнита (теперь точно виден) -->
+    <!-- Таймер магнита -->
     <div id="magnet-timer-zone" style="display:none">
         <div class="magnet-label">Магнит 🧲</div>
         <div id="magnet-bar-container">
@@ -42,8 +42,8 @@
 
     <canvas id="gameCanvas"></canvas>
 
-    <!-- ЭКРАНЫ -->
-    <div class="screen" id="menu-screen" style="background-image: url('bg.png'); background-size: cover; background-position: center;">
+    <!-- ГЛАВНОЕ МЕНЮ -->
+    <div class="screen" id="menu-screen">
         <h1>Heart Jump</h1>
         <div class="subtitle">Для самой лучшей девочки 💕</div>
         <button class="btn" onclick="startGame()">Новая игра</button>
@@ -52,24 +52,29 @@
         <button class="btn secondary" onclick="showScreen('ach-screen')">Достижения</button>
     </div>
 
-    <div class="screen" id="menu-screen" style="background-image: url('bg.png'); background-size: cover; background-position: center;">
+    <!-- ЭКРАН ПЕРСОНАЖЕЙ -->
+    <div class="screen" id="skins-screen" style="display:none">
         <h1>Персонажи</h1>
         <div class="scroll-grid" id="skins-grid"></div>
         <button class="btn secondary" onclick="showScreen('menu-screen')">Назад</button>
     </div>
 
-    <div class="screen" id="menu-screen" style="background-image: url('bg.png'); background-size: cover; background-position: center;">
+    <!-- ЭКРАН МАГАЗИНА ФОНОВ -->
+    <div class="screen" id="bg-screen" style="display:none">
         <div class="shop-header">Твои монетки: <span id="shop-coin-val">0</span> 💰</div>
         <h1>Магазин фонов</h1>
         <div class="scroll-grid" id="bg-grid"></div>
         <button class="btn secondary" onclick="showScreen('menu-screen')">Назад</button>
     </div>
-        <div class="screen" id="ach-screen" style="background-image: url('bg.png'); background-size: cover; background-position: center;">
+
+    <!-- ЭКРАН ДОСТИЖЕНИЙ -->
+    <div class="screen" id="ach-screen" style="display:none">
         <h1>Достижения</h1>
         <div class="ach-list" id="ach-list"></div>
         <button class="btn secondary" onclick="showScreen('menu-screen')">Назад</button>
     </div>
 
+    <!-- ЭКРАН ПРОИГРЫША -->
     <div class="screen" id="gameover-screen" style="display:none">
         <h1 id="go-title">Не расстраивайся!</h1>
         <div class="subtitle" id="go-msg"></div>
