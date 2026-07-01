@@ -100,9 +100,30 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-window.addEventListener('deviceorientation', e => {
+function handleTilt(e) {
     if (e.gamma !== null) tilt = Math.max(-1, Math.min(1, e.gamma / 22));
-});
+}
+
+function enableTiltAndStart() {
+    // iOS 13+ требует явный запрос разрешения по тапу пользователя,
+    // иначе deviceorientation молча не сработает
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+            .then(state => {
+                if (state === 'granted') {
+                    window.addEventListener('deviceorientation', handleTilt);
+                } else {
+                    alert('Без разрешения на датчики движения управление наклоном не будет работать 😔');
+                }
+                startGame();
+            })
+            .catch(() => startGame());
+    } else {
+        // Android и остальные браузеры — разрешение не требуется
+        window.addEventListener('deviceorientation', handleTilt);
+        startGame();
+    }
+}
 
 function startGame() {
     score = 0; currentH = 0; bonusS = 0; cameraY = 0;

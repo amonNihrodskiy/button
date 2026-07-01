@@ -45,7 +45,7 @@
     <!-- ГЛАВНОЕ МЕНЮ -->
     <div class="screen" id="menu-screen">
         <div class="subtitle">Для самой лучшей девочки 💕</div>
-        <button class="btn" onclick="startGame()">Новая игра</button>
+        <button class="btn" onclick="enableTiltAndStart()">Новая игра</button>
         <button class="btn secondary" onclick="showScreen('skins-screen')">Персонажи</button>
         <button class="btn secondary" onclick="showScreen('bg-screen')">Фоны</button>
         <button class="btn secondary" onclick="showScreen('ach-screen')">Достижения</button>
@@ -77,7 +77,7 @@
     <div class="screen" id="gameover-screen" style="display:none">
         <h1 id="go-title">Не расстраивайся!</h1>
         <div class="subtitle" id="go-msg"></div>
-        <button class="btn" onclick="startGame()">Еще раз</button>
+        <button class="btn" onclick="enableTiltAndStart()">Еще раз</button>
         <button class="btn secondary" onclick="showScreen('menu-screen')">В меню</button>
     </div>
 
