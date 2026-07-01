@@ -100,8 +100,17 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+const isIOS = /iP(hone|od|ad)/.test(navigator.platform) ||
+    (/Mac/.test(navigator.userAgent) && navigator.maxTouchPoints > 1); // iPad на новых версиях представляется как Mac
+
 function handleTilt(e) {
-    if (e.gamma !== null) tilt = Math.max(-1, Math.min(1, e.gamma / 22));
+    if (e.gamma !== null) {
+        // На iOS gamma приходит с обратным знаком относительно Android
+        // и сильнее реагирует на небольшой наклон — поэтому корректируем оба момента
+        const g = isIOS ? -e.gamma : e.gamma;
+        const sensitivity = isIOS ? 32 : 22;
+        tilt = Math.max(-1, Math.min(1, g / sensitivity));
+    }
 }
 
 function enableTiltAndStart() {
