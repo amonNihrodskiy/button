@@ -1,89 +1,204 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Heart Jump 💕</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Лишь для тебя одной</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap">
+<style>
+:root{--paper:#fbfaf4;--ink:#2a2b4f;--dim:rgba(42,43,79,.62);--bar:rgba(255,255,255,.85);--line:rgba(42,43,79,.28);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:var(--paper);color:var(--ink);overflow:hidden;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;-webkit-user-select:none;user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.serif{font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:600}
+#hint{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 3.5%);text-align:center;font-size:clamp(22px,4.4vw,32px);color:var(--dim);pointer-events:none;padding:0 60px;transition:opacity .6s}
+#cap{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);text-align:center;font-size:clamp(28px,6vw,46px);padding:0 16px;opacity:0;transition:opacity 1s;pointer-events:none}
+#cap.on{opacity:1}
+#cap.big{bottom:auto;top:34%;font-size:clamp(36px,8vw,70px);line-height:1.15}
+#next{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 22px);font:inherit;font-size:18px;color:var(--ink);background:var(--bar);border:1.5px solid var(--ink);border-radius:999px;padding:13px 34px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .8s}
+#next.on{opacity:1;pointer-events:auto}
+#snd{position:fixed;right:calc(env(safe-area-inset-right,0px) + 12px);top:calc(env(safe-area-inset-top,0px) + 10px);width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--bar);color:var(--ink);font-size:18px;cursor:pointer}
+#next:focus-visible,#snd:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){#hint,#cap,#next{transition:none}}
+</style>
 </head>
-<body class="bg-default">
+<body>
+<canvas id="c"></canvas>
+<div id="hint" class="serif"></div>
+<div id="cap" class="serif"></div>
+<button id="next">Дальше</button>
+<button id="snd" aria-label="Звук">♪</button>
+<script>
+const NAME = "тебя";
+const END_TEXT = "Всё это для " + NAME + ".<br>Спасибо, что ты есть.";
+function rgbOf(h){const n=parseInt(h.slice(1),16);return (n>>16&255)+','+(n>>8&255)+','+(n&255);}
+// pts: вершины в клетках. det: детали (p — линия/многоугольник, z — замкнуть, f — заливка, k — обводка, w — толщина; c+r — круг). 'i' = цвет контура фигуры
+const FIGS = [
+ {pts:[[4,7],[0,3],[0,1],[1,0],[3,0],[4,1],[5,0],[7,0],[8,1],[8,3]],col:'#ff4d6d',ink:'#c9184a',smooth:true,letters:['I','U'],cap:'',
+  det:[{p:[[1,1.9],[1.2,1.1],[2.1,.7],[1.7,1.4]],z:1,f:'rgba(255,255,255,.55)'}]},
+ {pts:[[4,0],[5,3],[8,3],[6,5],[7,8],[4,6],[1,8],[2,5],[0,3],[3,3]],col:'#ffd23f',ink:'#c98a00',cap:'Самая яркая на моём небосводе',
+  det:[[4,0],[8,3],[7,8],[1,8],[0,3]].map(q=>({p:[[4,4],q],k:'rgba(150,100,0,.5)',w:2}))},
+ {pts:[[2,0],[6,0],[8,3],[4,8],[0,3]],col:'#7fd8ff',ink:'#1a8fc4',cap:'Моё самое главное сокровище',
+  det:[{p:[[0,3],[8,3]],k:'i',w:2},{p:[[2,0],[3,3]],k:'i',w:2},{p:[[6,0],[5,3]],k:'i',w:2},{p:[[3,3],[4,8]],k:'i',w:2},{p:[[5,3],[4,8]],k:'i',w:2},
+  {p:[[2.7,.5],[3.6,.5],[3.2,2]],z:1,f:'rgba(255,255,255,.65)'}]},
+ {pts:[[0,3],[4,0],[8,3],[8,8],[0,8]],col:'#ffa36b',ink:'#d9622b',cap:'Домик, в котором хочется жить вдвоём',
+  det:[
+   {p:[[6,1.5],[6,.4],[7.1,.4],[7.1,2.3]],z:1,f:'#b4573a',k:'i',w:2.5},
+   {p:[[5.85,.4],[7.25,.4]],k:'#8a3d28',w:4},
+   {p:[[3,8],[3,5],[5,5],[5,8]],z:1,f:'#7a4a2b',k:'i',w:2.5},
+   {p:[[3.5,5.1],[3.5,7.9]],k:'rgba(0,0,0,.2)',w:1.5},{p:[[4.5,5.1],[4.5,7.9]],k:'rgba(0,0,0,.2)',w:1.5},
+   {c:[4.65,6.6],r:.13,f:'#ffd23f'},
+   {p:[[1,4],[2.5,4],[2.5,5.6],[1,5.6]],z:1,f:'#fff3b8',k:'i',w:2.5},
+   {p:[[1.75,4],[1.75,5.6]],k:'i',w:2},{p:[[1,4.8],[2.5,4.8]],k:'i',w:2},
+   {p:[[5.5,4],[7,4],[7,5.6],[5.5,5.6]],z:1,f:'#fff3b8',k:'i',w:2.5},
+   {p:[[6.25,4],[6.25,5.6]],k:'i',w:2},{p:[[5.5,4.8],[7,4.8]],k:'i',w:2},
+   {c:[4,2],r:.6,f:'#fff3b8',k:'i',w:2.5},{p:[[4,1.4],[4,2.6]],k:'i',w:2},{p:[[3.4,2],[4.6,2]],k:'i',w:2}]},
+ {pts:[[4,3],[7,0],[8,1],[8,4],[6,5],[8,7],[7,8],[4,6],[1,8],[0,7],[2,5],[0,4],[0,1],[1,0]],col:'#c9a2ff',ink:'#7a4bd6',cap:'Ты наполняешь мою жизнь красками',
+  det:[{c:[6.2,2.1],r:.65,f:'#ffe08a',k:'i',w:2},{c:[1.8,2.1],r:.65,f:'#ffe08a',k:'i',w:2},
+   {c:[6.3,6.3],r:.45,f:'#ffe08a',k:'i',w:2},{c:[1.7,6.3],r:.45,f:'#ffe08a',k:'i',w:2},
+   {p:[[3.8,3],[4.2,3],[4.2,6],[3.8,6]],z:1,f:'#4a2f82',k:'i',w:2},
+   {p:[[4,3],[3.2,1.7]],k:'i',w:2},{p:[[4,3],[4.8,1.7]],k:'i',w:2},{c:[3.2,1.7],r:.12,f:'i'},{c:[4.8,1.7],r:.12,f:'i'}]},
+ {pts:[[1,0],[3,2],[5,2],[7,0],[8,3],[8,6],[6,8],[2,8],[0,6],[0,3]],col:'#ffcf9e',ink:'#c27a2c',cap:'Мурррр....',
+  det:[{p:[[1.05,1.1],[2.2,2],[.8,2.4]],z:1,f:'#ffb3c6'},{p:[[6.95,1.1],[5.8,2],[7.2,2.4]],z:1,f:'#ffb3c6'},
+   {c:[2.3,4.5],r:.38,f:'#3a2a1a'},{c:[5.7,4.5],r:.38,f:'#3a2a1a'},{c:[2.45,4.35],r:.11,f:'#fff'},{c:[5.85,4.35],r:.11,f:'#fff'},
+   {p:[[3.7,5.5],[4.3,5.5],[4,5.9]],z:1,f:'#e5738b'},
+   {c:[1.5,5.6],r:.5,f:'rgba(255,130,160,.38)'},{c:[6.5,5.6],r:.5,f:'rgba(255,130,160,.38)'},{p:[[4,5.9],[4,6.3]],k:'i',w:2},{p:[[3.2,6.2],[3.55,6.65],[4,6.3],[4.45,6.65],[4.8,6.2]],k:'i',w:2.2},
+   {p:[[0,5.1],[1.8,5.5]],k:'i',w:1.5},{p:[[0,6],[1.8,5.9]],k:'i',w:1.5},{p:[[8,5.1],[6.2,5.5]],k:'i',w:1.5},{p:[[8,6],[6.2,5.9]],k:'i',w:1.5}]},
+ {pts:[[7,1],[5,0],[3,1],[1,3],[1,5],[3,7],[5,8],[7,7],[5,6],[4,5],[4,3],[5,2]],col:'#a9bcff',ink:'#4a63d6',cap:'Даже луна завидует твоему сиянию',
+  det:[{c:[2,3.6],r:.45,f:'rgba(74,99,214,.35)'},{c:[2.3,5.3],r:.35,f:'rgba(74,99,214,.35)'},{c:[3,2.3],r:.28,f:'rgba(74,99,214,.35)'},
+   {c:[6.2,3.2],r:.14,f:'i'},{c:[6.9,4.6],r:.1,f:'i'},{c:[5.9,5],r:.09,f:'i'}]},
+ {pts:[[4,0],[5,3],[8,4],[5,5],[4,8],[3,5],[0,4],[3,3]],col:'#ff9ecd',ink:'#d63f94',smooth:true,cap:'Маленькая искорка большого счастья',
+  det:[{c:[4,4],r:.55,f:'rgba(255,255,255,.65)'},{c:[7.2,1],r:.2,f:'i'},{c:[.8,7],r:.15,f:'i'},{c:[7.5,7.3],r:.1,f:'i'}]}
+];
+FIGS.forEach(f=>{f.rgb=rgbOf(f.col); f.irgb=rgbOf(f.ink); f.w=Math.max(...f.pts.map(p=>p[0])); f.h=Math.max(...f.pts.map(p=>p[1]));});
+const cv=document.getElementById('c'), g=cv.getContext('2d'), hint=document.getElementById('hint'), cap=document.getElementById('cap'), nextB=document.getElementById('next');
+let W,H,dpr,s,ox,oy;
+let cur=FIGS[0], deck=[], lastIdx=-1, phase='idle', seq=[], placed=0, segT=1, ft=0, outA=1, clock=0, parts=[], rips=[];
+function place(){ ox=Math.round(W/2-cur.w*s/2); oy=Math.round(H*.47-cur.h*s/2); }
+function layout(){
+  dpr=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; cv.width=W*dpr; cv.height=H*dpr;
+  s=Math.max(18,Math.min(60,Math.floor(Math.min(W*.95/14.5,H*.66/9)))); place();
+}
+function setHint(t){ hint.style.opacity=t?1:0; if(t) hint.textContent=t; }
+function newRound(){
+  lastIdx=deck.pop(); cur=FIGS[lastIdx];
+  const i=Math.floor(Math.random()*cur.pts.length); seq=cur.pts.slice(i).concat(cur.pts.slice(0,i));   // случайная стартовая вершина
+  placed=0; phase='idle'; place(); cap.classList.remove('on','big'); nextB.classList.remove('on'); setHint('Начни с этой точки');
+}
+function startGame(){
+  deck=FIGS.map((_,i)=>i).sort(()=>Math.random()-.5);
+  if(deck.length>1 && deck[deck.length-1]===lastIdx){ const t=deck[0]; deck[0]=deck[deck.length-1]; deck[deck.length-1]=t; }
+  newRound();
+}
+layout(); startGame();
+addEventListener('resize',()=>{ layout(); });
 
-<div id="desktop-msg">
-    <h1>📱💕</h1>
-    <p>Зайди с телефона для лучшего погружения!</p>
-</div>
+// ----- звук -----
+let AC=null, muted=false; const SC=[392,440,523.25,587.33,659.25,783.99,880,1046.5];
+function tone(f,v=.11,d=2){ if(!AC||muted) return; const n=AC.currentTime;
+  [[f,'sine',1],[f*2,'sine',.35],[f*3,'sine',.14],[f*1.003,'triangle',.15]].forEach(([fr,ty,m])=>{ const o=AC.createOscillator(),gn=AC.createGain(); o.type=ty;o.frequency.value=fr;
+    gn.gain.setValueAtTime(.0001,n); gn.gain.exponentialRampToValueAtTime(v*m,n+.006); gn.gain.exponentialRampToValueAtTime(.0001,n+d); o.connect(gn); gn.connect(AC.destination); o.start(n); o.stop(n+d+.05); }); }
+function chime(){ [0,2,4,7].forEach((k,i)=>setTimeout(()=>tone(SC[k],.1,2.6),i*150)); }
+const sndB=document.getElementById('snd');
+sndB.onclick=()=>{ muted=!muted; sndB.style.opacity=muted?.45:1; };
+sndB.addEventListener('pointerdown',e=>e.stopPropagation());
 
-<div id="game-wrapper">
-    <!-- Декорации игрового фона -->
-    <div class="bg-decor sun-glow"></div>
-    <div class="bg-decor cloud-1"></div>
-    <div class="bg-decor cloud-2"></div>
-    <div class="bg-decor birds"></div>
-    <div class="bg-decor moon"></div>
-    <div class="bg-decor stars"></div>
+// ----- логика -----
+const gp=p=>[ox+p[0]*s, oy+p[1]*s];
+function burst(x,y,n,c){ for(let i=0;i<n;i++){const a=Math.random()*6.28,v=1+Math.random()*3.5; parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1,l:1,c});} }
+function begin(){ placed=1; segT=1; phase='draw'; progress(); const q=gp(seq[0]); burst(q[0],q[1],10,cur.irgb); tone(SC[0]); }
+function progress(){ setHint('Теперь сюда  ·  '+Math.min(placed,seq.length)+' из '+seq.length); }
+function complete(){
+  phase='done'; ft=0; setHint('');
+  seq.forEach(p=>{const q=gp(p); burst(q[0],q[1],4,cur.irgb);}); chime();
+  if(cur.cap){ cap.textContent=cur.cap; cap.classList.add('on'); }
+  const my=cur; setTimeout(()=>{ if(phase==='done'&&cur===my){ nextB.textContent=deck.length?'Дальше':'Продолжить'; nextB.classList.add('on'); } },1700);
+}
+nextB.onclick=()=>{
+  nextB.classList.remove('on'); cap.classList.remove('on');
+  if(phase==='end'){ startGame(); return; }
+  if(phase==='done'){ phase='out'; outA=1; }
+};
+function afterOut(){
+  if(deck.length){ newRound(); return; }
+  phase='end'; setHint('');
+  setTimeout(()=>{cap.innerHTML=END_TEXT; cap.classList.add('on','big'); nextB.textContent='Ещё раз'; nextB.classList.add('on');},400);
+}
+cv.addEventListener('pointerdown',e=>{
+  if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)(); AC.resume&&AC.resume();}catch(_){} }
+  const x=e.clientX,y=e.clientY;
+  if(phase==='idle'){
+    const t=gp(seq[0]);
+    if(Math.hypot(x-t[0],y-t[1])<Math.max(s*1.5,44)) begin(); else rips.push({x,y,l:1});
+  } else if(phase==='draw'){
+    const t=gp(placed<seq.length?seq[placed]:seq[0]);
+    if(Math.hypot(x-t[0],y-t[1])<Math.max(s*.85,28)){
+      burst(t[0],t[1],8,cur.irgb);
+      if(placed<seq.length){ tone(SC[placed%SC.length]); placed++; segT=0; progress(); } else complete();
+    } else rips.push({x,y,l:1});
+  }
+});
 
-    <!-- HUD -->
-    <div id="hud" style="display:none">
-        <div id="score-val">0</div>
-        <div class="hud-stats">Рекорд: <span id="best-val">0</span> | Всего: <span id="sum-val">0</span></div>
-    </div>
-
-    <div id="coin-hud" style="display:none">
-        💰 <span id="coin-val">0</span>
-    </div>
-
-    <!-- Таймер магнита -->
-    <div id="magnet-timer-zone" style="display:none">
-        <div class="magnet-label">Магнит 🧲</div>
-        <div id="magnet-bar-container">
-            <div id="magnet-bar"></div>
-        </div>
-    </div>
-
-    <canvas id="gameCanvas"></canvas>
-
-    <!-- ГЛАВНОЕ МЕНЮ -->
-    <div class="screen" id="menu-screen">
-        <div class="subtitle">Для самой лучшей девочки 💕</div>
-        <button class="btn" onclick="enableTiltAndStart()">Новая игра</button>
-        <button class="btn secondary" onclick="showScreen('skins-screen')">Персонажи</button>
-        <button class="btn secondary" onclick="showScreen('bg-screen')">Фоны</button>
-        <button class="btn secondary" onclick="showScreen('ach-screen')">Достижения</button>
-    </div>
-
-    <!-- ЭКРАН ПЕРСОНАЖЕЙ -->
-    <div class="screen" id="skins-screen" style="display:none">
-        <h1>Персонажи</h1>
-        <div class="scroll-grid" id="skins-grid"></div>
-        <button class="btn secondary" onclick="showScreen('menu-screen')">Назад</button>
-    </div>
-
-    <!-- ЭКРАН МАГАЗИНА ФОНОВ -->
-    <div class="screen" id="bg-screen" style="display:none">
-        <div class="shop-header">Твои монетки: <span id="shop-coin-val">0</span> 💰</div>
-        <h1>Магазин фонов</h1>
-        <div class="scroll-grid" id="bg-grid"></div>
-        <button class="btn secondary" onclick="showScreen('menu-screen')">Назад</button>
-    </div>
-
-    <!-- ЭКРАН ДОСТИЖЕНИЙ -->
-    <div class="screen" id="ach-screen" style="display:none">
-        <h1>Достижения</h1>
-        <div class="ach-list" id="ach-list"></div>
-        <button class="btn secondary" onclick="showScreen('menu-screen')">Назад</button>
-    </div>
-
-    <!-- ЭКРАН ПРОИГРЫША -->
-    <div class="screen" id="gameover-screen" style="display:none">
-        <h1 id="go-title">Не расстраивайся!</h1>
-        <div class="subtitle" id="go-msg"></div>
-        <button class="btn" onclick="enableTiltAndStart()">Еще раз</button>
-        <button class="btn secondary" onclick="showScreen('menu-screen')">В меню</button>
-    </div>
-
-    <div id="ach-toast"></div>
-</div>
-
-<script src="game.js"></script>
+// ----- рисование -----
+function pathOf(P,smooth){
+  g.beginPath(); const n=P.length, mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  if(!smooth){ g.moveTo(P[0][0],P[0][1]); for(let i=1;i<n;i++) g.lineTo(P[i][0],P[i][1]); g.closePath(); return; }
+  const m0=mid(P[n-1],P[0]); g.moveTo(m0[0],m0[1]);
+  for(let i=0;i<n;i++){ const m=mid(P[i],P[(i+1)%n]); g.quadraticCurveTo(P[i][0],P[i][1],m[0],m[1]); }
+  g.closePath();
+}
+function drawFig(F,am){
+  const P=seq.map(gp);
+  g.save(); g.globalAlpha=am*ft; g.shadowColor='rgba('+F.rgb+',.55)'; g.shadowBlur=22; pathOf(P,F.smooth); g.fillStyle=F.col; g.fill(); g.restore();
+  g.save(); g.globalAlpha=am; g.lineJoin='round'; g.lineWidth=3; g.strokeStyle=F.ink; pathOf(P,F.smooth); g.stroke(); g.restore();
+  g.save(); g.globalAlpha=am*ft; g.lineJoin='round'; g.lineCap='round';
+  const C=c=>c==='i'?F.ink:c;
+  F.det.forEach(d=>{
+    g.beginPath();
+    if(d.c){ const q=gp(d.c); g.arc(q[0],q[1],d.r*s,0,6.3); }
+    else { d.p.forEach((p,i)=>{const q=gp(p); i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]);}); if(d.z) g.closePath(); }
+    if(d.f){ g.fillStyle=C(d.f); g.fill(); }
+    if(d.k){ g.lineWidth=d.w||2; g.strokeStyle=C(d.k); g.stroke(); }
+  });
+  g.restore();
+  if(F.letters){
+    const cy=oy+(F.h/2+.2)*s;
+    g.save(); g.globalAlpha=am*Math.max(0,ft*1.4-.4); g.font='italic 600 '+Math.round(s*3.4)+'px "Cormorant Garamond",Georgia,serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillStyle=F.ink; g.shadowColor='rgba('+F.rgb+',.7)'; g.shadowBlur=16;
+    g.fillText(F.letters[0],ox-1.7*s,cy); g.fillText(F.letters[1],ox+(F.w+1.7)*s,cy); g.restore();
+  }
+}
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000); last=now; clock+=dt;
+  g.setTransform(dpr,0,0,dpr,0,0); g.globalCompositeOperation='source-over'; g.fillStyle='#fbfaf4'; g.fillRect(0,0,W,H);
+  g.strokeStyle='rgba(104,150,214,.36)'; g.lineWidth=1; g.beginPath();
+  for(let x=((ox%s)+s)%s;x<=W;x+=s){g.moveTo(x+.5,0);g.lineTo(x+.5,H);} for(let y=((oy%s)+s)%s;y<=H;y+=s){g.moveTo(0,y+.5);g.lineTo(W,y+.5);} g.stroke();
+  const F=cur;
+  if(phase==='idle'){
+    const q=gp(seq[0]), k=(clock*.9)%1;
+    g.strokeStyle='rgba('+F.irgb+','+(1-k)*.6+')'; g.lineWidth=2; g.beginPath(); g.arc(q[0],q[1],s*(.4+k*1.2),0,6.3); g.stroke();
+    g.strokeStyle='rgb('+F.irgb+')'; g.lineWidth=2.5; g.beginPath(); g.arc(q[0],q[1],s*(.42+.07*Math.sin(clock*4.5)),0,6.3); g.stroke();
+    g.fillStyle='rgb('+F.irgb+')'; g.beginPath(); g.arc(q[0],q[1],5,0,6.3); g.fill();
+  }
+  if(phase==='draw'){
+    g.lineCap='round'; g.lineJoin='round'; g.strokeStyle='#2a3a8c'; g.lineWidth=3;
+    for(let i=0;i<placed-1;i++){ const a=gp(seq[i]),b=gp(seq[i+1]); let f=1; if(i===placed-2){ segT=Math.min(1,segT+dt*5); f=1-Math.pow(1-segT,3); }
+      g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f); g.stroke(); }
+    for(let i=0;i<placed;i++){ const q=gp(seq[i]); g.fillStyle='#2a3a8c'; g.beginPath(); g.arc(q[0],q[1],4.5,0,6.3); g.fill(); }
+    const c0=gp(seq[placed-1]), tg=gp(placed<seq.length?seq[placed]:seq[0]), dx=tg[0]-c0[0], dy=tg[1]-c0[1];
+    g.setLineDash([7,9]); g.lineDashOffset=-clock*26; g.strokeStyle='rgba('+F.irgb+',.85)'; g.lineWidth=2; g.beginPath(); g.moveTo(c0[0],c0[1]); g.lineTo(tg[0],tg[1]); g.stroke(); g.setLineDash([]);
+    g.save(); g.translate(c0[0]+dx*.55,c0[1]+dy*.55); g.rotate(Math.atan2(dy,dx)); g.fillStyle='rgb('+F.irgb+')'; g.beginPath(); g.moveTo(8,0); g.lineTo(-6,-6); g.lineTo(-6,6); g.closePath(); g.fill(); g.restore();
+    const r=s*(.3+.08*Math.sin(clock*4.5)); g.strokeStyle='rgb('+F.irgb+')'; g.lineWidth=2.5; g.beginPath(); g.arc(tg[0],tg[1],r,0,6.3); g.stroke();
+    g.fillStyle='rgb('+F.irgb+')'; g.beginPath(); g.arc(tg[0],tg[1],4,0,6.3); g.fill();
+  }
+  if(phase==='done'){ ft=Math.min(1,ft+dt/1.3); drawFig(F,1); }
+  if(phase==='out'){ outA=Math.max(0,outA-dt/.5); drawFig(F,outA); if(outA<=0) afterOut(); }
+  if(phase==='end' && Math.random()<.25) burst(Math.random()*W,H*(.1+Math.random()*.7),1,FIGS[Math.floor(Math.random()*FIGS.length)].irgb);
+  for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=.06; p.l-=dt*.9; if(p.l<=0){parts.splice(i,1);continue;}
+    g.fillStyle='rgba('+p.c+','+p.l+')'; g.beginPath(); g.arc(p.x,p.y,2.8*p.l+.5,0,6.3); g.fill(); }
+  for(let i=rips.length-1;i>=0;i--){ const r=rips[i]; r.l-=dt*2; if(r.l<=0){rips.splice(i,1);continue;} g.strokeStyle='rgba(42,58,140,'+r.l*.5+')'; g.lineWidth=1.5; g.beginPath(); g.arc(r.x,r.y,(1-r.l)*s*.9+4,0,6.3); g.stroke(); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
 </body>
 </html>
