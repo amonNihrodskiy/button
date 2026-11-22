@@ -44,6 +44,10 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 #lclose:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){#lcard{animation:none}}
 #cap.glass{text-shadow:0 0 14px rgba(255,255,255,.95),0 0 5px rgba(255,255,255,.95)}   /* текст читается на зеркале с пеной */
+.mact{max-width:920px;margin:0 auto 14px;display:flex;gap:10px;flex-wrap:wrap}
+.mact button{flex:1 1 150px;font:inherit;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;font-style:normal;font-size:15px;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;cursor:pointer}
+.mact button:hover{border-color:var(--ink)}
+.mact button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -55,6 +59,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <button id="menuB" aria-label="Все рисунки">☰</button>
 <div id="menu" role="dialog" aria-label="Все рисунки">
   <div class="mh"><div><h2 class="serif">Все рисунки</h2><small id="mcount"></small></div><button id="mclose" aria-label="Закрыть">✕</button></div>
+  <div class="mact"><button id="mUnlockAll" type="button">Открыть все рисунки</button><button id="mLockAll" type="button">Удалить все рисунки</button></div>
   <div class="grid" id="mgrid"></div>
 </div>
 <div id="letter" role="dialog" aria-label="Письмо"><div id="lcard" class="serif"></div></div>
@@ -92,7 +97,7 @@ const CAPTIONS = {
   cupcake:     'Ты моя порция эндорфинов',   // Кекс
   candle:      'Ты мой свет в любой темноте',   // Свечка
   bear:        'Обнимаю тебя крепко-крепко',   // Мишка
-  princess:     'Ты моя маленькая принцесса',   // Принцесса
+  princess:    'Ты моя маленькая принцесса',   // Принцесса
   watermelon:  'Ты моя сладкая долька лета',   // Арбуз
   pizza:       'Ты моя любимая вкусняшка',   // Пицца
   snowman:     'С тобой мне никогда не холодно',   // Снеговик
@@ -728,6 +733,12 @@ function openMenu(){ menu.classList.add('on'); renderMenu(); }
 function closeMenu(){ menu.classList.remove('on'); }
 document.getElementById('menuB').onclick=openMenu;
 document.getElementById('mclose').onclick=closeMenu;
+document.getElementById('mUnlockAll').onclick=()=>{ unlockAll(); };   // открыть все рисунки
+const mLockAll=document.getElementById('mLockAll'); let lockArm=0;      // удалить все рисунки: нужно нажать два раза, чтобы не стереть случайно
+mLockAll.onclick=()=>{
+  if(!lockArm){ mLockAll.textContent='Точно удалить? Нажми ещё раз'; lockArm=setTimeout(()=>{ lockArm=0; mLockAll.textContent='Удалить все рисунки'; },3000); }
+  else { clearTimeout(lockArm); lockArm=0; mLockAll.textContent='Удалить все рисунки'; lockAll(); }
+};
 addEventListener('keydown',e=>{ if(e.key==='Escape') closeMenu(); });
 
 // ----- консольные команды (для отладки): открой консоль браузера (F12) и введи команду -----
